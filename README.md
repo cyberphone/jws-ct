@@ -53,9 +53,12 @@ demo is currently available at: https://mobilepki.org/jws-jcs/home
 2. Serialize the data using *existing* JSON tools
 3. Apply the canonicalizing filter process described in
  https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-00#section-3.2 on the serialized data
-4. Use the result of the previous step as "payload" to the JWS signature process descibed in
-https://tools.ietf.org/html/rfc7515#appendix-F
-5. Add the resulting JWS string to the original JSON data through a designated signature property
+4. Use the result of the previous step as "JWS Payload" to the JWS signature process descibed in
+https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization mode
+5. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
 6. Serialize the completed (now signed) JSON object using *existing* JSON tools
 
 ### Available Canonicalization Software
+- https://www.npmjs.com/package/canonicalize
+- https://github.com/cyberphone/json-canonicalization/tree/master/dotnet#json-canonicalizer-for-net
+- https://github.com/cyberphone/json-canonicalization/tree/master/java/canonicalizer#json-canonicalizer-for-java
