@@ -28,9 +28,9 @@ By rather using JWS in "detached" mode you can reap the benefits of text based s
   "signature": "eyJhbGciOiJFUzI1NiIsImp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IlB4bEpRdTlRNmRPdk00TEtvWlVoMlhJZTktcGRjTGt2S2ZCZlFrMTFTYjAiLCJ5IjoiNklEcXV4cmJkcTVBQmU0LUhRNzhfZGhNNmVFQlVidkR0ZHFLMzFZZlJQOCJ9fQ..NtipYry9O9A3kdUH4LoRiEuUyIhaCakqfwKh6GAZpnDRUZRGOjiqmYh1Ga9ueSvp2VtiaIL27LrDM47It4WTAA"
 }
 ```
-You may wonder why this is not already described in the JWS standard, right?  Because JSON doesn't require
+You may wonder why this is not already described in the JWS standard, right?  Since JSON doesn't require
 object properties to be in any specific order as well as having multiple ways of representing the same data, 
-you must apply a simple filter process to the original object in order to create a *robust and platform 
+you must apply a *filter process* to the original object in order to create a *robust and platform 
 independent representation* of the JWS "payload".  If applied to the sample you would get:
 ```json
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
@@ -41,12 +41,21 @@ is *internal to the signatures process*; the "wire format" remains unaffected.
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
 - Due to *transport independence*, signed objects can (for example) be used in browsers
-- Signed objects can be *stored* in databases without losing the signature
-- Signed objects can be *embedded* in other JSON objects since they conform to JSON
+- Signed objects can be *stored in databases* without losing the signature
+- Signed objects can be *embedded in other JSON objects* since they conform to JSON
 
 ### On Line Demo
 If you want to test the signature scheme without any installation or downloading, a
 demo is currently available at: https://mobilepki.org/jws-jcs/home
 
-### Detailed Description
+### Detailed Signing Operation
+1. Create or parse the JSON data to be signed
+2. Serialize the data using *existing* JSON tools
+3. Apply the canonicalizing filter process described in
+ https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-00#section-3.2 on the serialized data
+4. Use the result of the previous step as "payload" to the JWS signature process descibed in
+https://tools.ietf.org/html/rfc7515#appendix-F
+5. Add the resulting JWS string to the original JSON data through a designated signature property
+6. Serialize the completed (now signed) JSON object using *existing* JSON tools
 
+### Available Canonicalization Software
