@@ -35,7 +35,7 @@ independent representation* of the JWS "payload".  If applied to the sample you 
 ```json
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
 ```
-In this *deliberately simple sample*, only the order of the properties needed "correction".  Note that this method
+In this *deliberately simple case*, only the order of properties needed "correction".  Note that this method
 is *internal to the signatures process*; the "wire format" remains unaffected.
 
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
@@ -45,7 +45,7 @@ The primary advantages of this scheme versus using HTTP headers include:
 - Signed objects can be *embedded* in other JSON objects since they conform to JSON
 
 ### On Line Demo
-If you want to test the signature scheme without any installation or downloading, a simple
+If you want to test the signature scheme without any installation or downloading, a
 demo is currently available at: https://mobilepki.org/jws-jcs/home
 
 ### Detailed Description
