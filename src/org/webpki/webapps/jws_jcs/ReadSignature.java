@@ -20,36 +20,48 @@ import java.io.IOException;
 
 import java.math.BigInteger;
 
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+
+import java.security.cert.X509Certificate;
 
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 
 import java.security.spec.ECPoint;
 
+import java.util.regex.Pattern;
+
 import org.webpki.crypto.AlgorithmPreferences;
+import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CertificateInfo;
 import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
+import org.webpki.crypto.SignatureWrapper;
 
 import org.webpki.json.JSONArrayReader;
 import org.webpki.json.JSONCryptoHelper;
-import org.webpki.json.JSONRemoteKeys;
-import org.webpki.json.JSONSignatureDecoder;
+import org.webpki.json.JSONOutputFormats;
+import org.webpki.json.JSONParser;
 import org.webpki.json.JSONObjectReader;
-import org.webpki.json.JSONSymKeyVerifier;
 import org.webpki.json.JSONTypes;
 
-import org.webpki.json.WebKey;  // from "test" actually
-
+import org.webpki.util.ArrayUtil;
+import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
 
 /**
  * Simple signature verify program
  */
 public class ReadSignature {
+    
+    static final Pattern DETACHED_JWS_PATTERN  = Pattern.compile("^[0-9a-zA-Z\\-_]+\\.\\.[0-9a-zA-Z\\-_]+$");
 
     private StringBuilder result = new StringBuilder();
+    
+    JSONObjectReader jwsHeader;
+
+    byte[] canonicalizedData;
 
     private String cryptoBinary(BigInteger value, KeyAlgorithms key_alg)
             throws IOException {
@@ -82,117 +94,95 @@ public class ReadSignature {
         return pre + result.toString();
     }
     
-    void processOneSignature(JSONSignatureDecoder signature) throws IOException {
-        switch (signature.getSignatureType()) {
-        case ASYMMETRIC_KEY:
-            PublicKey publicKey = signature.getPublicKey();
-            KeyAlgorithms key_alg = KeyAlgorithms
-                    .getKeyAlgorithm(publicKey);
-            StringBuilder asym_text = new StringBuilder(
-                    "Asymmetric key signature validated for:\n")
-                    .append(key_alg.isECKey() ? "EC" : "RSA")
-                    .append(" Public Key (")
-                    .append(key_alg.getPublicKeySizeInBits())
-                    .append(" bits)");
-            if (key_alg.isECKey()) {
-                asym_text.append(", Curve=").append(
-                        key_alg.getJceName());
-                ECPoint ec_point = ((ECPublicKey) publicKey)
-                        .getW();
-                asym_text
-                        .append("\nX: ")
-                        .append(cryptoBinary(ec_point.getAffineX(),
-                                key_alg))
-                        .append("\nY: ")
-                        .append(cryptoBinary(ec_point.getAffineY(),
-                                key_alg));
+    void processOneSignature(JSONObjectReader signedObject) throws IOException, GeneralSecurityException {
+        String jwsSignature = signedObject.getString(JSONCryptoHelper.SIGNATURE_JSON);
+        if (!DETACHED_JWS_PATTERN.matcher(jwsSignature).matches()) {
+            throw new IOException("Malformed JWS string");
+        }
+        signedObject = signedObject.clone();  // Non-destructive validation
+        signedObject.removeProperty(JSONCryptoHelper.SIGNATURE_JSON);
+        canonicalizedData = signedObject.serializeToBytes(JSONOutputFormats.CANONICALIZED);
+        int dot = jwsSignature.indexOf('.');
+        byte[] signedData = (jwsSignature.substring(0, dot + 1) + 
+                             Base64URL.encode(canonicalizedData)).getBytes("utf-8");
+        jwsHeader = JSONParser.parse(Base64URL.decode(jwsSignature.substring(0, dot)));
+        byte[] signatureValue = Base64URL.decode(jwsSignature.substring(dot + 2));
+        String algorithm = jwsHeader.getString(JSONCryptoHelper.ALG_JSON);
+        StringBuilder debug = new StringBuilder();
+        if (algorithm.startsWith("HS")) {
+            if (!ArrayUtil.compare(signatureValue,
+                MACAlgorithms.getAlgorithmFromId(algorithm, 
+                                                 AlgorithmPreferences.JOSE)
+                    .digest(GenerateSignature.SYMMETRIC_KEY, signedData))) {
+                throw new IOException("HMAC signature did not validate");
+            }
+            debug.append("HMAC signature validated for Key ID: ")
+                 .append(jwsHeader.getString(JSONCryptoHelper.KID_JSON))
+                 .append("\nValue=")
+                 .append(DebugFormatter.getHexString(GenerateSignature.SYMMETRIC_KEY));
+            
+        } else {
+            AsymSignatureAlgorithms asymAlg = 
+                AsymSignatureAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE);
+            PublicKey publicKey;
+            if (jwsHeader.hasProperty(JSONCryptoHelper.X5C_JSON)) {
+                X509Certificate[] cert_path = jwsHeader.getCertificatePath();
+                debug.append("X509 signature validated for:\n")
+                     .append(new CertificateInfo(cert_path[0]).toString());
+                publicKey = cert_path[0].getPublicKey();
             } else {
-                asym_text
-                        .append("\nModulus: ")
-                        .append(cryptoBinary(
-                                ((RSAPublicKey) publicKey)
-                                        .getModulus(), key_alg))
-                        .append("\nExponent: ")
-                        .append(cryptoBinary(
-                                ((RSAPublicKey) publicKey)
-                                        .getPublicExponent(),
-                                key_alg));
-            }
-            debugOutput(asym_text.toString());
-            break;
-
-        case SYMMETRIC_KEY:
-            signature.verify(new JSONSymKeyVerifier(
-                    new GenerateSignature.SymmetricOperations()));
-            debugOutput("Symmetric key signature validated for Key ID: "
-                    + signature.getKeyId()
-                    + "\nValue="
-                    + DebugFormatter
-                            .getHexString(GenerateSignature.SYMMETRIC_KEY));
-            break;
-
-        default:
-            debugOutput("X509 signature validated for:\n"
-                    + new CertificateInfo(
-                            signature.getCertificatePath()[0])
-                            .toString());
-            break;
-        }
-    }
-
-    void recurseObject(JSONObjectReader rd) throws IOException {
-        for (String property : rd.getProperties()) {
-            switch (rd.getPropertyType(property)) {
-            case OBJECT:
-                if (property.equals(JSONCryptoHelper._getDefaultSignatureLabel())) {
-                    boolean multi = false;
-                    JSONObjectReader outer = rd.getObject(JSONCryptoHelper._getDefaultSignatureLabel());
-                    JSONObjectReader inner = outer;
-                    JSONCryptoHelper.Options options = new JSONCryptoHelper.Options();
-                    String algo = null;
-                    if (outer.hasProperty(JSONCryptoHelper.SIGNERS_JSON)) {
-                        multi = true;
-                        inner = outer.getArray(JSONCryptoHelper.SIGNERS_JSON).getObject();
-                        algo = outer.getStringConditional(JSONCryptoHelper.ALG_JSON);
-                    }
-                    if (algo == null) {
-                        algo = inner.getString(JSONCryptoHelper.ALG_JSON);
-                    }
-                    options.setAlgorithmPreferences(AlgorithmPreferences.JOSE_ACCEPT_PREFER);
-                    for (MACAlgorithms macs : MACAlgorithms.values()) {
-                        if (algo.equals(macs.getAlgorithmId(AlgorithmPreferences.JOSE_ACCEPT_PREFER))) {
-                            options.setRequirePublicKeyInfo(false)
-                                   .setKeyIdOption(JSONCryptoHelper.KEY_ID_OPTIONS.REQUIRED);
-                        }
-                    }
-                    if (inner.hasProperty(JSONCryptoHelper.JKU_JSON)) {
-                        options.setRemoteKeyReader(new WebKey(), JSONRemoteKeys.JWK_KEY_SET);
-                    } else if (inner.hasProperty(JSONCryptoHelper.X5U_JSON)) {
-                        options.setRemoteKeyReader(new WebKey(), JSONRemoteKeys.PEM_CERT_PATH);
-                    }
-                    if (multi) {
-                        for (JSONSignatureDecoder signature : rd.getMultiSignature(options)) {
-                            processOneSignature(signature);
-                        }
-                    } else {
-                        processOneSignature(rd.getSignature(options));
-                    }
+                publicKey = jwsHeader.getPublicKey();
+                KeyAlgorithms key_alg = KeyAlgorithms.getKeyAlgorithm(publicKey);
+                debug.append("Asymmetric key signature validated for:\n")
+                     .append(key_alg.isECKey() ? "EC" : "RSA")
+                     .append(" Public Key (")
+                     .append(key_alg.getPublicKeySizeInBits())
+                     .append(" bits)");
+                if (key_alg.isECKey()) {
+                    debug.append(", Curve=").append(key_alg.getJceName());
+                    ECPoint ec_point = ((ECPublicKey) publicKey).getW();
+                    debug.append("\nX: ")
+                         .append(cryptoBinary(ec_point.getAffineX(), key_alg))
+                         .append("\nY: ")
+                         .append(cryptoBinary(ec_point.getAffineY(), key_alg));
                 } else {
-                    recurseObject(rd.getObject(property));
+                    debug.append("\nModulus: ")
+                         .append(cryptoBinary(((RSAPublicKey) publicKey).getModulus(), key_alg))
+                         .append("\nExponent: ")
+                         .append(cryptoBinary(((RSAPublicKey) publicKey).getPublicExponent(), key_alg));
                 }
-                break;
+            }
+            if (!new SignatureWrapper(asymAlg, publicKey)
+                .update(signedData)
+                .verify(signatureValue)) {
+                throw new IOException("Signature validation failed for:\n" + publicKey.toString());
+            }
+        }
+        debugOutput(debug.toString());
+    }
 
-            case ARRAY:
-                recurseArray(rd.getArray(property));
-                break;
-
-            default:
-                rd.scanAway(property);
+    void recurseObject(JSONObjectReader rd) throws IOException, GeneralSecurityException {
+        for (String property : rd.getProperties()) {
+            if (property.equals(JSONCryptoHelper.SIGNATURE_JSON)) {
+                processOneSignature(rd);
+            } else {
+                switch (rd.getPropertyType(property)) {
+                case OBJECT:
+                    recurseObject(rd.getObject(property));
+                    break;
+    
+                case ARRAY:
+                    recurseArray(rd.getArray(property));
+                    break;
+    
+                default:
+                    rd.scanAway(property);
+                }
             }
         }
     }
 
-    void recurseArray(JSONArrayReader array) throws IOException {
+    void recurseArray(JSONArrayReader array) throws IOException, GeneralSecurityException {
         while (array.hasMore()) {
             if (array.getElementType() == JSONTypes.OBJECT) {
                 recurseObject(array.getObject());

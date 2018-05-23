@@ -73,6 +73,9 @@ public class CreateServlet extends HttpServlet {
         }
         try {
             JSONObjectReader reader = JSONParser.parse(json_object);
+            if (reader.getJSONArrayReader() != null) {
+                throw new IOException("The demo does not support signed arrays");
+            }
             JSONObjectWriter writer = new JSONObjectWriter(reader);
             byte[] signed_json = new GenerateSignature(action)
                     .sign(writer);

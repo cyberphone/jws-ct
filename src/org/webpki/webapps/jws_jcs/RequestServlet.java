@@ -18,6 +18,8 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 
+import java.security.GeneralSecurityException;
+
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -27,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.json.JSONObjectReader;
-import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
 
@@ -49,7 +50,7 @@ public class RequestServlet extends HttpServlet {
 
     void verifySignature(HttpServletRequest request,
             HttpServletResponse response, byte[] signed_json)
-            throws IOException, ServletException {
+            throws IOException, ServletException, GeneralSecurityException {
         logger.info("JSON Signature Verification Entered");
         ReadSignature doc = new ReadSignature();
         JSONObjectReader parsed_json = JSONParser.parse(signed_json);
@@ -61,14 +62,19 @@ public class RequestServlet extends HttpServlet {
         + "<tr><td align=\"left\">"
         + HTML.newLines2HTML(doc.getResult())
         + "</td></tr>"
-        + "<tr><td align=\"left\">Received Message:</td></tr>"
+        + "<tr><td align=\"left\">Signed JSON Object:</td></tr>"
         + "<tr><td align=\"left\">"
-        + HTML.fancyBox(
-                "verify",
-                new String(
-                        new JSONObjectWriter(parsed_json)
-                                .serializeToBytes(JSONOutputFormats.PRETTY_HTML),
-                        "UTF-8")) + "</td></tr>" + "</table>");
+        + HTML.fancyBox("verify", parsed_json.serializeToString(JSONOutputFormats.PRETTY_HTML))
+        + "</td></tr>"
+        + "<tr><td align=\"left\">&nbsp;<br>Decoded JWS Header:</td></tr>"
+        + "<tr><td align=\"left\">"
+        + HTML.fancyBox("header", doc.jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML))
+        + "</td></tr>"
+        + "<tr><td align=\"left\">&nbsp;<br>Canonicalized JSON Data (with possible line breaks for display purposes only):</td></tr>"
+        + "<tr><td align=\"left\">"
+        + HTML.fancyBox("canonicalized", HTML.encode(new String(doc.canonicalizedData, "UTF-8")))
+        + "</td></tr>"
+        + "</table>");
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -103,7 +109,7 @@ public class RequestServlet extends HttpServlet {
         }
         try {
             verifySignature(request, response, Base64URL.decode(json));
-        } catch (IOException e) {
+        } catch (IOException | GeneralSecurityException e) {
             HTML.errorPage(response, e.getMessage());
             return;
         }

@@ -21,26 +21,38 @@ import java.io.IOException;
 import java.security.KeyStore;
 import java.security.PublicKey;
 
+import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymKeySignerInterface;
+import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.KeyStoreSigner;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SymKeySignerInterface;
 import org.webpki.crypto.SymKeyVerifierInterface;
 
-import org.webpki.json.JSONAsymKeySigner;
+import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
-import org.webpki.json.JSONSymKeySigner;
-import org.webpki.json.JSONX509Signer;
 
 import org.webpki.util.ArrayUtil;
+import org.webpki.util.Base64URL;
 
 /**
  * Simple signature test generator
  */
 public class GenerateSignature {
 
-    static enum ACTION {SYM, EC, RSA, X509}
+    static enum ACTION {
+         SYM  ("HS256"),
+         EC   ("ES256"), 
+         RSA  ("RS256"), 
+         X509 ("RS256");
+         
+         String algorithm;
+         
+         ACTION (String algorithm) {
+             this.algorithm = algorithm;
+         }
+    }
 
     static final String KEY_NAME = "mykey";
 
@@ -95,16 +107,37 @@ public class GenerateSignature {
     }
 
     byte[] sign(JSONObjectWriter wr) throws IOException {
-        if (action == ACTION.X509) {
-            wr.setSignature(new JSONX509Signer(new AsymSignatureHelper(
-                    JWSService.clientkey_rsa).setExtendedCertPath(true)));
-        } else if (action == ACTION.SYM) {
-            wr.setSignature(new JSONSymKeySigner(new SymmetricOperations()).setKeyId(KEY_NAME));
+        AsymSignatureHelper ash = null;
+        JSONObjectWriter jwsHeader = new JSONObjectWriter();
+        jwsHeader.setString(JSONCryptoHelper.ALG_JSON, action.algorithm);
+        if (action == ACTION.SYM) {
+            jwsHeader.setString(JSONCryptoHelper.KID_JSON, KEY_NAME);
+        } else if (action == ACTION.X509) {
+            jwsHeader.setCertificatePath(((ash = new AsymSignatureHelper(
+                    JWSService.clientkey_rsa)).getCertificatePath()));
         } else {
-            wr.setSignature(new JSONAsymKeySigner(new AsymSignatureHelper(
+            jwsHeader.setPublicKey((ash = new AsymSignatureHelper(
                     action == ACTION.RSA ? JWSService.clientkey_rsa
-                            : JWSService.clientkey_ec)));
+                            : JWSService.clientkey_ec)).getPublicKey());
         }
+        String jwsHeaderB64 = Base64URL.encode(jwsHeader.serializeToBytes(JSONOutputFormats.NORMALIZED));
+        String payloadB64 = Base64URL.encode(wr.serializeToBytes(JSONOutputFormats.CANONICALIZED));
+        String toBeSigned = jwsHeaderB64 + "." + payloadB64;
+        byte[] toBeSignedBin = toBeSigned.getBytes("utf-8");
+        byte[] signatureValue;
+        if (action == ACTION.SYM) {
+            signatureValue = 
+                MACAlgorithms.getAlgorithmFromId(action.algorithm, AlgorithmPreferences.JOSE)
+                    .digest(SYMMETRIC_KEY, toBeSignedBin);
+        } else {
+            ash.setECDSASignatureEncoding(false);
+            signatureValue = ash.signData(toBeSignedBin, 
+                AsymSignatureAlgorithms
+                    .getAlgorithmFromId(action.algorithm, AlgorithmPreferences.JOSE));
+        }
+        wr.setString(JSONCryptoHelper.SIGNATURE_JSON,
+                     jwsHeaderB64 + ".." + Base64URL.encode(signatureValue));
+        System.out.println(jwsHeaderB64 + "." + payloadB64 + "." + Base64URL.encode(signatureValue));
         return wr.serializeToBytes(JSONOutputFormats.PRETTY_PRINT);
     }
 }

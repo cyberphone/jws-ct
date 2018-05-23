@@ -120,7 +120,7 @@ public class HTML {
         s.append(
                 "><div style=\"cursor:pointer;padding:2pt 0 0 0;position:absolute;top:15pt;left:15pt;z-index:5;visibility:visible;width:100pt;"
         + "height:47pt;border-width:1px;border-style:solid;border-color:black;box-shadow:3pt 3pt 3pt #D0D0D0\""
-        + " onclick=\"document.location.href='http://webpki.org'\" title=\"Home of WebPKI.org\">")
+        + " onclick=\"document.location.href='https://github.com/cyberphone'\" title=\"Home of WebPKI.org\">")
                 .append(JWSService.logotype)
                 .append("</div><table cellapdding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">")
                 .append(box).append("</table></body></html>");
@@ -194,7 +194,7 @@ public class HTML {
         + request.getRequestURL().toString()
         + "\">"
         + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">Testing JSON Signatures<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\">Paste a JSON signature in the text box or try with the default:</td></tr>"
+        + "<tr><td align=\"left\">Paste a signed JSON object in the text box or try with the default:</td></tr>"
         + "<tr><td align=\"left\">"
         + fancyText(20, encode(signature))
         + "</td></tr>"
@@ -277,16 +277,6 @@ public class HTML {
         + "    }\n"
         + "    return encoded;\n"
         + "}\n\n" +
-        "JSON.canonicalize = (x) => JSON.stringify(x,(_, x) => {\n" +
-        "  if (x && typeof x === 'object' && !Array.isArray(x)) {\n" +
-        "    const sorted = {}\n" +
-        "    for (let key of Object.getOwnPropertyNames(x).sort()) {\n" +
-        "      sorted[key] = x[key]\n" +
-        "    }\n" +
-        "    return sorted\n" +
-        "  }\n" +
-        "  return x\n" +
-        "});\n\n" +
         "function convertToUTF8(string) {\n"
         + " var buffer = [];\n"
         + " for (var i = 0; i < string.length; i++) {\n"
@@ -309,7 +299,7 @@ public class HTML {
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "function fancyJSONBox(header, json) {\n"
         + "  return header + ':<br><div style=\"margin-top:3pt;background:#F8F8F8;border-width:1px;border-style:solid;border-color:grey;"
-        + "max-width:800pt;padding:10pt;word-wrap:break-word;box-shadow:3pt 3pt 3pt #D0D0D0\">' + JSON.stringify(json) + '</div>';\n"
+        + "max-width:800pt;padding:10pt;word-break:break-all;box-shadow:3pt 3pt 3pt #D0D0D0\">' + JSON.stringify(json, null, '  ').replace(/\\n/g,'<br>').replace(/  /g,'&nbsp;&nbsp;&nbsp;&nbsp;') + '</div>';\n"
         + "}\n\n"
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "// Error message helper                                                 //\n"
@@ -349,6 +339,53 @@ public class HTML {
         + "  });"
         + "\n}\n\n"
         + "//////////////////////////////////////////////////////////////////////////\n"
+        + "// Canonicalizer                                                        //\n"
+        + "//////////////////////////////////////////////////////////////////////////\n" +
+        "var canonicalize = function(object) {\n" +
+        "\n" +
+        "    var buffer = '';\n" +
+        "    serialize(object);\n" +
+        "    return buffer;\n" +
+        "\n" +
+        "    function serialize(object) {\n" +
+        "        if (object !== null && typeof object === 'object') {\n" +
+        "            if (Array.isArray(object)) {\n" +
+        "                buffer += '[';\n" +
+        "                let next = false;\n" +
+        "                // Array - Maintain element order\n" +
+        "                object.forEach((element) => {\n" +
+        "                    if (next) {\n" +
+        "                        buffer += ',';\n" +
+        "                    }\n" +
+        "                    next = true;\n" +
+        "                    // Recursive call\n" +
+        "                    serialize(element);\n" +
+        "                });\n" +
+        "                buffer += ']';\n" +
+        "            } else {\n" +
+        "                buffer += '{';\n" +
+        "                let next = false;\n" +
+        "                // Object - Sort properties before serializing\n" +
+        "                Object.keys(object).sort().forEach((property) => {\n" +
+        "                    if (next) {\n" +
+        "                        buffer += ',';\n" +
+        "                    }\n" +
+        "                    next = true;\n" +
+        "                    // Properties are just strings - Use ES6\n" +
+        "                    buffer += JSON.stringify(property);\n" +
+        "                    buffer += ':';\n" +
+        "                    // Recursive call\n" +
+        "                    serialize(object[property]);\n" +
+        "                });\n" +
+        "                buffer += '}';\n" +
+        "            }\n" +
+        "        } else {\n" +
+        "            // Primitive data type - Use ES6\n" +
+        "            buffer += JSON.stringify(object);\n" +
+        "        }\n" +
+        "    }\n" +
+        "};\n\n"
+        + "//////////////////////////////////////////////////////////////////////////\n"
         + "// Sign event handler                                                   //\n"
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "function signSampleData() {\n"
@@ -360,21 +397,19 @@ public class HTML {
         + "      return;\n"
         + "    }\n"
         + "    if (jsonObject."
-        + JSONCryptoHelper._getDefaultSignatureLabel()
+        + JSONCryptoHelper.SIGNATURE_JSON
         + ") {\n"
         + "      bad('sign.res', 'Object is already signed');\n"
         + "      return;\n"
         + "    }\n"
-        + "    var signatureObject = jsonObject."
-        + JSONCryptoHelper._getDefaultSignatureLabel()
-        + " = {};\n"
-        + "    signatureObject."
+        + "    var jwsHeader = {};\n"
+        + "    jwsHeader."
         + JSONCryptoHelper.ALG_JSON
         + " = '"
         + AsymSignatureAlgorithms.RSA_SHA256
                 .getAlgorithmId(AlgorithmPreferences.JOSE)
         + "';\n"
-        + "    var publicKeyObject = signatureObject."
+        + "    var publicKeyObject = jwsHeader."
         + JSONCryptoHelper.JWK_JSON
         + " = {};\n"
         + "    publicKeyObject."
@@ -396,14 +431,16 @@ public class HTML {
         + "    bad('sign.res', 'JSON error: ' + err.toString());\n"
         + "    return;\n"
         + "  }\n"
+        + "  var jwsHeaderB64 = convertToBase64URL(convertToUTF8(JSON.stringify(jwsHeader)));\n"
+        + "  var payloadB64 = convertToBase64URL(convertToUTF8(canonicalize(jsonObject)));\n"
         + "  crypto.subtle.sign({name: 'RSASSA-PKCS1-v1_5'}, privKey,\n"
-        + "                     convertToUTF8(JSON.canonicalize" +
-        "(jsonObject))).then(function(signature) {\n"
+        + "                     convertToUTF8(jwsHeaderB64 + '.' + payloadB64" +
+        ")).then(function(signature) {\n"
         + "    console.log('Sign with RSASSA-PKCS1-v1_5 - SHA-256: PASS');\n"
-        + "    signatureObject."
-        + JSONCryptoHelper._getValueLabel()
-        + " = convertToBase64URL(new Uint8Array(signature));\n"
-        + "    document.getElementById('sign.res').innerHTML = fancyJSONBox('Signed data in JVS-CT format', jsonObject) + "
+        + "    jsonObject."
+        + JSONCryptoHelper.SIGNATURE_JSON
+        + " = jwsHeaderB64 + '..' + convertToBase64URL(new Uint8Array(signature));\n"
+        + "    document.getElementById('sign.res').innerHTML = fancyJSONBox('Signed data in JWS-JCS format', jsonObject) + "
         + "'<p><input type=\"button\" value=\"Verify Signature (on the server)\" onClick=\"verifySignatureOnServer()\"></p>';\n"
         + "  }).then(undefined, function() {\n"
         + "    bad('sign.res', 'WebCrypto failed for unknown reasons');\n"

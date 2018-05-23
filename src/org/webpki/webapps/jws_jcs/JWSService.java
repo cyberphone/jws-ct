@@ -30,8 +30,6 @@ import javax.servlet.ServletContextListener;
 import org.webpki.crypto.CustomCryptoProvider;
 import org.webpki.crypto.KeyStoreReader;
 
-import org.webpki.json.JSONCryptoHelper;
-
 import org.webpki.util.ArrayUtil;
 
 import org.webpki.webutil.InitPropertyReader;
@@ -96,7 +94,7 @@ public class JWSService extends InitPropertyReader implements
                     getResource(getPropertyString("clientkey_ec")),
                     key_password);
 
-            logger.info("JWS-CT Demo Successfully Initiated");
+            logger.info("JWS-JWS Demo Successfully Initiated");
         } catch (Exception e) {
             logger.log(Level.SEVERE, "********\n" + e.getMessage()
                     + "\n********", e);
