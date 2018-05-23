@@ -31,14 +31,14 @@ By rather using JWS in "detached" mode you can reap the benefits of text based s
 You may wonder why this is not already described in the JWS standard, right?  Because JSON doesn't require
 object properties to be in any specific order as well as having multiple ways of representing the same data, 
 you must apply a simple filter process to the original object in order to create a *robust and platform 
-indepdent representation* of the JWS "payload".  If appied to the sample you would get:
+independent representation* of the JWS "payload".  If applied to the sample you would get:
 ```json
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
 ```
-In this *deliberately* simple sample, only the order of the properties needed "correction".  Note that this method
-is *internal*, the "wire format" remains unaffected.
+In this *deliberately simple sample*, only the order of the properties needed "correction".  Note that this method
+is *internal to the signatures process*; the "wire format" remains unaffected.
 
-The knowlegable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
+The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
 - Due to *transport independence*, signed objects can (for example) be used in browsers
 - Signed objects can be *stored* in databases without losing the signature
