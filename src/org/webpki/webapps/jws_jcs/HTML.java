@@ -299,7 +299,7 @@ public class HTML {
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "function fancyJSONBox(header, json) {\n"
         + "  return header + ':<br><div style=\"margin-top:3pt;background:#F8F8F8;border-width:1px;border-style:solid;border-color:grey;"
-        + "max-width:800pt;padding:10pt;word-break:break-all;box-shadow:3pt 3pt 3pt #D0D0D0\">' + JSON.stringify(json, null, '  ').replace(/\\n/g,'<br>').replace(/  /g,'&nbsp;&nbsp;&nbsp;&nbsp;') + '</div>';\n"
+        + "max-width:800pt;padding:10pt;word-break:break-all;box-shadow:3pt 3pt 3pt #D0D0D0\">' + JSON.stringify(json, null, '  ').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>').replace(/  /g,'&nbsp;&nbsp;&nbsp;&nbsp;') + '</div>';\n"
         + "}\n\n"
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "// Error message helper                                                 //\n"
