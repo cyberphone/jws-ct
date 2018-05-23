@@ -18,7 +18,7 @@ QlVidkR0ZHFLMzFZZlJQOCJ9fQ.eyJvdGhlclByb3BlcnRpZXMiOlsyMDAwLHRydWVdLCJzdGF0ZW1lb
 IZWxsbyBzaWduZWQgd29ybGQhIn0.NtipYry9O9A3kdUH4LoRiEuUyIhaCakqfwKh6GAZpnDRUZRGOjiqmYh1G
 a9ueSvp2VtiaIL27LrDM47It4WTAA
 ```
-That's not very cool since one the major benefits of text based schemes (human readability) got lost in the process.
+That's not very cool since one of the major benefits of text based schemes (*human readability*), got lost in the process.
 ### Clear Text Signatures
 By rather using JWS in "detached" mode you can reap the benefits of text based schemes while keeping existing security standards!  
 ```json
@@ -29,7 +29,7 @@ By rather using JWS in "detached" mode you can reap the benefits of text based s
 }
 ```
 You may wonder why this is not already described in the JWS standard, right?  Because JSON doesn't require
-object properties to be in any specific order as well as having multiple ways of representing the same value, 
+object properties to be in any specific order as well as having multiple ways of representing the same data, 
 you must apply a simple filter process to the original object in order to create a *robust and platform 
 indepdent representation* of the JWS "payload".  If appied to the sample you would get:
 ```json
@@ -38,7 +38,15 @@ indepdent representation* of the JWS "payload".  If appied to the sample you wou
 In this *deliberately* simple sample, only the order of the properties needed "correction".  Note that this method
 is *internal*, the "wire format" remains unaffected.
 
-The knowlegable reader probably realizes that this is similar to using an HTTP header for holding a detached JWS object.
-- The difference is that the solution described here is indepdent of transport and can (for example) be used in browsers
-- Can be stored in databases without losing the signature
-- Can be embedded in other JSON messages
+The knowlegable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
+The primary advantages of this scheme versus using HTTP headers include:
+- Due to *transport independence*, signed objects can (for example) be used in browsers
+- Signed objects can be *stored* in databases without losing the signature
+- Signed objects can be *embedded* in other JSON objects since they conform to JSON
+
+### On Line Demo
+If you want to test the signature scheme without any installation or downloading, a simple
+demo is currently available at: https://mobilepki.org/jws-jcs/home
+
+### Detailed Description
+
