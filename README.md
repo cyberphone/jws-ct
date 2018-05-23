@@ -58,6 +58,16 @@ https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization
 5. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
 6. Serialize the completed (now signed) JSON object using *existing* JSON tools
 
+### Detailed Verification Operation
+1. Parse the signed JSON data using *existing* JSON tools
+2. Read and save the JWS string from the designated signature property
+3. Remove the signature property from the parsed JSON object
+4. Serialize the remaining JSON data using *existing* JSON tools
+5. Apply the canonicalizing filter process described in
+ https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-00#section-3.2 on the serialized data
+6. Use the result of the previous step as "JWS Payload" to the JWS validation process descibed in
+https://tools.ietf.org/html/rfc7515#appendix-F
+
 ### Available Canonicalization Software
 - https://www.npmjs.com/package/canonicalize
 - https://github.com/cyberphone/json-canonicalization/tree/master/dotnet#json-canonicalizer-for-net
