@@ -1,6 +1,7 @@
 ## Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
 This repository contains a PoC showing how to create "clear text" JSON signatures
-by combining detached JWS compact objects with canonicalization.
+by combining detached JWS compact objects with 
+[canonicalization](https://github.com/cyberphone/json-canonicalization#json-canonicalization).
 
 ### Problem Statement
 Assume you have a JSON object like the following:
@@ -20,7 +21,8 @@ a9ueSvp2VtiaIL27LrDM47It4WTAA
 ```
 That's not very cool since one of the major benefits of text based schemes (*human readability*), got lost in the process.
 ### Clear Text Signatures
-By rather using JWS in "detached" mode you can reap the benefits of text based schemes while keeping existing security standards!  
+By rather using JWS in "detached" mode you can reap the benefits of text based schemes while
+keeping existing security standards!  
 ```json
 {
   "statement": "Hello signed world!",
@@ -30,8 +32,8 @@ By rather using JWS in "detached" mode you can reap the benefits of text based s
 ```
 You may wonder why this is not already described in the JWS standard, right?  Since JSON doesn't require
 object properties to be in any specific order as well as having multiple ways of representing the same data, 
-you must apply a *filter process* to the original object in order to create a *robust and platform 
-independent representation* of the JWS "payload".  If applied to the sample you would get:
+you must apply a *filter process* to the original object in order to create a *unique and platform 
+independent representation* of the JWS "payload".  Applied to the sample you would get:
 ```json
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
 ```
@@ -40,7 +42,7 @@ is *internal to the signatures process*; the "wire format" remains unaffected.
 
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
-- Due to *transport independence*, signed objects can (for example) be used in browsers
+- Due to *transport independence*, signed objects can for example also be used be used in browsers expressed in JavaScript
 - Signed objects can be *stored in databases* without losing the signature
 - Signed objects can be *embedded in other JSON objects* since they conform to JSON
 
