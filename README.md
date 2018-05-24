@@ -1,7 +1,8 @@
 ## Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
 This repository contains a PoC showing how to create "clear text" JSON signatures
-by combining detached JWS compact objects with 
-[canonicalization](https://github.com/cyberphone/json-canonicalization#json-canonicalization).
+by combining detached JWS compact objects with a 
+[canonicalization](https://github.com/cyberphone/json-canonicalization#json-canonicalization)
+scheme.
 
 ### Problem Statement
 Assume you have a JSON object like the following:
@@ -42,7 +43,8 @@ is *internal to the signatures process*; the "wire format" remains unaffected.
 
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
-- Due to *transport independence*, signed objects can for example also be used be used in browsers expressed in JavaScript
+- Due to *transport independence*, signed objects can for example be used in
+browsers expressed in JavaScript or be exchanged asynchronously over WebSockets
 - Signed objects can be *stored in databases* without losing the signature
 - Signed objects can be *embedded in other JSON objects* since they conform to JSON
 
