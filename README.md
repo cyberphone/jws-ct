@@ -44,7 +44,7 @@ is *internal to the signatures process*; the "wire format" remains unaffected.
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
 - Due to *transport independence*, signed objects can for example be used in
-browsers expressed in JavaScript or be exchanged asynchronously over WebSockets
+browsers expressed in JavaScript or be asynchronously exchanged over WebSockets
 - Signed objects can be *stored in databases* without losing the signature
 - Signed objects can be *embedded in other JSON objects* since they conform to JSON
 
