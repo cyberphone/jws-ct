@@ -62,7 +62,7 @@ https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization
 5. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
 6. Serialize the completed (now signed) JSON object using *existing* JSON tools
 
-### Detailed Verification Operation
+### Detailed Validation Operation
 1. Parse the signed JSON data using *existing* JSON tools
 2. Read and save the JWS string from the designated signature property
 3. Remove the signature property from the parsed JSON object
