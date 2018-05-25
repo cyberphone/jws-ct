@@ -18,13 +18,8 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 
-import java.security.KeyStore;
-import java.security.PublicKey;
-
 import org.webpki.crypto.AlgorithmPreferences;
-import org.webpki.crypto.AsymKeySignerInterface;
 import org.webpki.crypto.AsymSignatureAlgorithms;
-import org.webpki.crypto.KeyStoreSigner;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SymKeySignerInterface;
 import org.webpki.crypto.SymKeyVerifierInterface;
@@ -67,22 +62,11 @@ public class GenerateSignature {
             (byte) 0x74, (byte) 0x34, (byte) 0x69, (byte) 0x09 };
 
     ACTION action;
+    boolean keyInlining;
 
-    GenerateSignature(ACTION action) {
+    GenerateSignature(ACTION action, boolean keyInlining) {
         this.action = action;
-    }
-
-    static class AsymSignatureHelper extends KeyStoreSigner implements
-            AsymKeySignerInterface {
-        AsymSignatureHelper(KeyStore signer_keystore) throws IOException {
-            super(signer_keystore, null);
-            setKey(KEY_NAME, JWSService.key_password);
-        }
-
-        @Override
-        public PublicKey getPublicKey() throws IOException {
-            return getCertificatePath()[0].getPublicKey();
-        }
+        this.keyInlining = keyInlining;
     }
 
     static class SymmetricOperations implements SymKeySignerInterface, SymKeyVerifierInterface {
@@ -113,12 +97,12 @@ public class GenerateSignature {
         if (action == ACTION.SYM) {
             jwsHeader.setString(JSONCryptoHelper.KID_JSON, KEY_NAME);
         } else if (action == ACTION.X509) {
-            jwsHeader.setCertificatePath(((ash = new AsymSignatureHelper(
-                    JWSService.clientkey_rsa)).getCertificatePath()));
+            jwsHeader.setCertificatePath((ash = JWSService.clientkey_rsa).getCertificatePath());
         } else {
-            jwsHeader.setPublicKey((ash = new AsymSignatureHelper(
-                    action == ACTION.RSA ? JWSService.clientkey_rsa
-                            : JWSService.clientkey_ec)).getPublicKey());
+            ash = action == ACTION.RSA ? JWSService.clientkey_rsa : JWSService.clientkey_ec;
+            if (keyInlining) {
+                jwsHeader.setPublicKey(ash.getPublicKey());
+            }
         }
         String jwsHeaderB64 = Base64URL.encode(jwsHeader.serializeToBytes(JSONOutputFormats.NORMALIZED));
         String payloadB64 = Base64URL.encode(wr.serializeToBytes(JSONOutputFormats.CANONICALIZED));
