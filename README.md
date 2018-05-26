@@ -14,11 +14,8 @@ Assume you have a JSON object like the following:
 ```
 If you would like to sign this object using JWS compact mode you would end-up with something like this:
 ```code
-eyJhbGciOiJFUzI1NiIsImp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IlB4bEpRdTlRNmRPdk
-00TEtvWlVoMlhJZTktcGRjTGt2S2ZCZlFrMTFTYjAiLCJ5IjoiNklEcXV4cmJkcTVBQmU0LUhRNzhfZGhNNmVF
-QlVidkR0ZHFLMzFZZlJQOCJ9fQ.eyJvdGhlclByb3BlcnRpZXMiOlsyMDAwLHRydWVdLCJzdGF0ZW1lbnQiOiJ
-IZWxsbyBzaWduZWQgd29ybGQhIn0.NtipYry9O9A3kdUH4LoRiEuUyIhaCakqfwKh6GAZpnDRUZRGOjiqmYh1G
-a9ueSvp2VtiaIL27LrDM47It4WTAA
+eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0.eyJvdGhlclByb3BlcnRpZXMiOlsyMDAwLHRydWVdLCJzdG
+F0ZW1lbnQiOiJIZWxsbyBzaWduZWQgd29ybGQhIn0.5HfEplOnS8GGtoSLU1KFcE8h0GXJaOZ4Th3fNDBgcBE
 ```
 That's not very cool since one of the major benefits of text based schemes (*human readability*), got lost in the process.
 ### Clear Text Signatures
@@ -28,7 +25,7 @@ keeping existing security standards!
 {
   "statement": "Hello signed world!",
   "otherProperties": [2000,true],
-  "signature": "eyJhbGciOiJFUzI1NiIsImp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IlB4bEpRdTlRNmRPdk00TEtvWlVoMlhJZTktcGRjTGt2S2ZCZlFrMTFTYjAiLCJ5IjoiNklEcXV4cmJkcTVBQmU0LUhRNzhfZGhNNmVFQlVidkR0ZHFLMzFZZlJQOCJ9fQ..NtipYry9O9A3kdUH4LoRiEuUyIhaCakqfwKh6GAZpnDRUZRGOjiqmYh1Ga9ueSvp2VtiaIL27LrDM47It4WTAA"
+  "signature": "eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0..5HfEplOnS8GGtoSLU1KFcE8h0GXJaOZ4Th3fNDBgcBE"
 }
 ```
 You may wonder why this is not already described in the JWS standard, right?  Since JSON doesn't require
