@@ -18,7 +18,7 @@ eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0.eyJvdGhlclByb3BlcnRpZXMiOlsyMDAwLHRydWVd
 F0ZW1lbnQiOiJIZWxsbyBzaWduZWQgd29ybGQhIn0.5HfEplOnS8GGtoSLU1KFcE8h0GXJaOZ4Th3fNDBgcBE
 ```
 That's not very cool since one of the major benefits of text based schemes (*human readability*), got lost in the process.
-In addition, the whole JSON structure was transformed into something entirely different. 
+In addition, *the whole JSON structure was transformed into something entirely different*. 
 ### Clear Text Signatures
 By rather using JWS in "detached" mode you can reap the benefits of text based schemes while
 keeping existing security standards!  
