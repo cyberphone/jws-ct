@@ -9,13 +9,13 @@ Assume you have a JSON object like the following:
 ```json
 {
   "statement": "Hello signed world!",
-  "otherProperties": [2000,true]
+  "otherProperties": [2e+3, true]
 }
 ```
 If you would like to sign this object using JWS compact mode you would end-up with something like this:
 ```code
 eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0.eyJvdGhlclByb3BlcnRpZXMiOlsyMDAwLHRydWVdLCJzdG
-F0ZW1lbnQiOiJIZWxsbyBzaWduZWQgd29ybGQhIn0.5HfEplOnS8GGtoSLU1KFcE8h0GXJaOZ4Th3fNDBgcBE
+F0ZW1lbnQiOiJIZWxsbyBzaWduZWQgd29ybGQhIn0.FcE8h0GXJaOZ4Th3fNDBgcBE5HfEplOnS8GGtoSLU1K
 ```
 That's not very cool since one of the major benefits of text based schemes (*human readability*), got lost in the process.
 In addition, *the whole JSON structure was transformed into something entirely different*. 
@@ -25,7 +25,7 @@ keeping existing security standards!
 ```json
 {
   "statement": "Hello signed world!",
-  "otherProperties": [2000,true],
+  "otherProperties": [2e+3, true],
   "signature": "eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0..5HfEplOnS8GGtoSLU1KFcE8h0GXJaOZ4Th3fNDBgcBE"
 }
 ```
@@ -36,8 +36,7 @@ independent representation* of the JWS "payload".  Applied to the sample you wou
 ```json
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
 ```
-In this *deliberately simple case*, only the order of properties needed "correction".  Note that this method
-is *internal to the signatures process*; the "wire format" remains unaffected.
+Note that this method is *internal to the signatures process*; the "wire format" remains unaffected.
 
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
