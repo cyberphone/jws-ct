@@ -503,7 +503,7 @@ public class HTML {
                 "{\n"
                         + ""
                         + "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n"
-                        + "  &quot;otherProperties&quot;: [2000, true]\n"
+                        + "  &quot;otherProperties&quot;: [2e+3, true]\n"
                         + "}")
         + "</td></tr>"
         + "<tr><td align=\"center\"><table class=\"keytable\" style=\"margin-top:8pt\">"

@@ -20,6 +20,8 @@ import java.io.IOException;
 
 import java.security.GeneralSecurityException;
 
+import java.util.Vector;
+
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -55,6 +57,16 @@ public class RequestServlet extends HttpServlet {
         ReadSignature doc = new ReadSignature();
         JSONObjectReader parsed_json = JSONParser.parse(signed_json);
         doc.recurseObject(parsed_json);
+        String prettySignature = parsed_json.serializeToString(JSONOutputFormats.PRETTY_HTML);
+        Vector<String> tokens = new JSONTokenExtractor().getTokens(new String(signed_json, "utf-8"));
+        int fromIndex = 0;
+        for (String token : tokens) {
+            int start = prettySignature.indexOf("<span ", fromIndex);
+            int stop = prettySignature.indexOf("</span>", start);
+            // <span style="color:#C00000">
+            prettySignature = prettySignature.substring(0, start + 28) + token + prettySignature.substring(stop);
+            fromIndex = start + 1;
+        }
         HTML.printResultPage(
                 response,
                 "<table>"
@@ -64,7 +76,7 @@ public class RequestServlet extends HttpServlet {
         + "</td></tr>"
         + "<tr><td align=\"left\">Signed JSON Object:</td></tr>"
         + "<tr><td align=\"left\">"
-        + HTML.fancyBox("verify", parsed_json.serializeToString(JSONOutputFormats.PRETTY_HTML))
+        + HTML.fancyBox("verify", prettySignature)
         + "</td></tr>"
         + "<tr><td align=\"left\">&nbsp;<br>Decoded JWS Header:</td></tr>"
         + "<tr><td align=\"left\">"

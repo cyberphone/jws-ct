@@ -79,13 +79,21 @@ public class CreateServlet extends HttpServlet {
                 throw new IOException("The demo does not support signed arrays");
             }
             JSONObjectWriter writer = new JSONObjectWriter(reader);
-            byte[] signed_json = new GenerateSignature(action, keyInlining)
-                    .sign(writer);
+            String signed_json = new String(new GenerateSignature(action, keyInlining)
+                    .sign(writer), "utf-8");
+            int i = signed_json.lastIndexOf("\"sig");
+            if (signed_json.charAt(i - 1) == ',') {
+                i--;
+            }
+            int j = json_object.lastIndexOf("}");
+            signed_json = json_object.substring(0, j) + 
+                    signed_json.substring(i, signed_json.length() - 1) +
+                    json_object.substring(j);
             RequestDispatcher rd = request
                     .getRequestDispatcher((jsFlag ? "jssignature?" : "request?")
                             + RequestServlet.JWS_ARGUMENT
                             + "="
-                            + Base64URL.encode(signed_json));
+                            + Base64URL.encode(signed_json.getBytes("utf-8")));
             rd.forward(request, response);
         } catch (IOException e) {
             HTML.errorPage(response, e.getMessage());

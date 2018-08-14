@@ -122,6 +122,6 @@ public class GenerateSignature {
         wr.setString(JSONCryptoHelper.SIGNATURE_JSON,
                      jwsHeaderB64 + ".." + Base64URL.encode(signatureValue));
         System.out.println(jwsHeaderB64 + "." + payloadB64 + "." + Base64URL.encode(signatureValue));
-        return wr.serializeToBytes(JSONOutputFormats.PRETTY_PRINT);
+        return wr.serializeToBytes(JSONOutputFormats.NORMALIZED);
     }
 }
