@@ -62,11 +62,10 @@ https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization
 ### Detailed Validation Operation
 1. Parse the signed JSON data using *existing* JSON tools
 2. Read and save the JWS string from the designated signature property
-3. Remove the signature property from the parsed JSON object
-4. Serialize the remaining JSON data using *existing* JSON tools
-5. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-01#section-3.2 on the serialized data
-6. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
+3. Remove the signature property from the parsed JSON data
+4. Apply the canonicalizing filter process described in
+ https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-01#section-3.2 on the remaining data
+5. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
 https://tools.ietf.org/html/rfc7515#appendix-F
 
 ### Available Canonicalization Software
