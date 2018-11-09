@@ -18,19 +18,15 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
-
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-
 import java.util.Enumeration;
 import java.util.Vector;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,9 +35,8 @@ import javax.servlet.ServletContextListener;
 
 import org.webpki.crypto.CustomCryptoProvider;
 import org.webpki.crypto.KeyStoreReader;
-
 import org.webpki.util.ArrayUtil;
-
+import org.webpki.util.Base64;
 import org.webpki.webutil.InitPropertyReader;
 
 public class JWSService extends InitPropertyReader implements ServletContextListener {
@@ -77,6 +72,37 @@ public class JWSService extends InitPropertyReader implements ServletContextList
                     return;
                 }
             }
+        }
+
+        StringBuilder getPrivateKeyPEM() {
+            return createPEM("PRIVATE KEY", keyPair.getPrivate().getEncoded());
+        }
+
+        StringBuilder getCertificatePathPEM() {
+            StringBuilder collection = new StringBuilder();
+            boolean next = false;
+            for (X509Certificate certificate : certificatePath) {
+                if (next) {
+                    collection.append('\n');
+                }
+                next = true;
+                try {
+                    collection.append(createPEM("CERTIFICATE", certificate.getEncoded()));
+                } catch (GeneralSecurityException e) {
+                    new RuntimeException(e);
+                }
+            }
+            return collection;
+        }
+
+        private StringBuilder createPEM(String header, byte[] binary) {
+            return new StringBuilder("-----BEGIN ")
+                .append(header)
+                .append("-----\n")
+                .append(new Base64().getBase64StringFromBinary(binary))
+                .append("\n-----END ")
+                .append(header)
+                .append("-----\n");
         }
     }
 

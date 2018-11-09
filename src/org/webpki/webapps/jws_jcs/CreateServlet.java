@@ -38,6 +38,10 @@ public class CreateServlet extends HttpServlet {
     static final String KEY_TYPE     = "keytype";
     static final String JS_FLAG      = "js";
     static final String KEY_INLINING = "keyinlining";
+    
+    static final String JS_EC_KEY    = "ecPEM";
+    static final String JS_RSA_KEY   = "rsaPEM";
+    static final String JS_CERT_PATH = "certPEM";
 
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
@@ -55,7 +59,7 @@ public class CreateServlet extends HttpServlet {
                         "Paste an unsigned JSON object in the text box or try with the default") +
                 "<div style=\"display:flex;justify-content:center;padding-top:15pt\">" +
                 "<table class=\"keytable\">" +
-                "<tr><td valign=\"middle\" rowspan=\"5\">Signing&nbsp;parmeters:&nbsp;</td><td align=\"left\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
+                "<tr><td valign=\"middle\" rowspan=\"5\">Signing parameters:&nbsp;</td><td align=\"left\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
                 CreateServlet.KEY_TYPE +
                 "\" value=\"" +
                 GenerateSignature.ACTION.SYM +
@@ -72,14 +76,15 @@ public class CreateServlet extends HttpServlet {
                 "<tr><td align=\"center\" style=\"border-width:0 0 1px 1px\">")
             .append(radioButton(false, 
                     GenerateSignature.ACTION.RSA,
-                    "alert('hy')"))
+                    "rsaKey()"))
             .append(
                 "</td><td style=\"border-width:0 0 1px 0\">RSA Key (2048)</td></tr>" +
-                "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
-                CreateServlet.KEY_TYPE +
-                "\" value=\"" +
-                GenerateSignature.ACTION.X509 +
-                "\"></td><td colspan=\"3\">X.509 Certificate/Private key</td></tr>" +
+                "<tr><td align=\"center\" style=\"padding-left:2px\">")
+            .append(radioButton(false,
+                    GenerateSignature.ACTION.X509,
+                    "certPath()"))
+            .append(
+                "</td><td colspan=\"3\">X.509 Certificate/Private key</td></tr>" +
                 "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"checkbox\" name=\"" +
                 CreateServlet.JS_FLAG +
                 "\" value=\"true\"></td><td colspan=\"3\">Serialize as JavaScript (but do not verify)</td></tr>" +
@@ -88,32 +93,72 @@ public class CreateServlet extends HttpServlet {
                 "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
                 "Create JSON Signature!" +
                 "</div>" +
-                "</div>");
-        html.append(
-                HTML.fancyText(false,
-                          RequestServlet.JWS_PRIVATE_KEY,
-                          4,
-                          "{\n" +
-                          "}",
-                          "Additional JWS header parameters (here expressed as properties of a JSON object)"));
-        html.append(
+                "</div>")
+            .append(
                 HTML.fancyText(true,
                           RequestServlet.JWS_ADDITIONAL,
                           4,
                           "{\n" +
                           "}",
                           "Additional JWS header parameters (here expressed as properties of a JSON object)"))
-              .append("</form>");
+            .append(
+                HTML.fancyText(false,
+                          RequestServlet.JWS_PRIVATE_KEY,
+                          4,
+                          "{\n" +
+                          "}",
+                          "Private key in PEM/PKCS #8 format"))
+            .append(
+                HTML.fancyText(false,
+                          RequestServlet.JWS_CERT_PATH,
+                          4,
+                          "{\n" +
+                          "}",
+                          "Certificate path in PEM format"))
+            .append("</form>");
         StringBuilder js = new StringBuilder();
+        createPEMJS(js, JS_EC_KEY, JWSService.clientkey_ec.getPrivateKeyPEM());
+        createPEMJS(js, JS_RSA_KEY, JWSService.clientkey_rsa.getPrivateKeyPEM());
+        createPEMJS(js, JS_CERT_PATH, JWSService.clientkey_rsa.getCertificatePathPEM());
         js.append(
+            "function fill(element, data) {\n" +
+            "  document.getElementById(element).children[1].innerHTML = data;\n" +
+            "}\n" +
+            "function showCert(show) {\n" +
+            "  document.getElementById('" + RequestServlet.JWS_CERT_PATH + "').style.display= show ? 'block' : 'none';\n" +
+            "}\n" +
+            "function showPriv(show) {\n" +
+            "  document.getElementById('" + RequestServlet.JWS_PRIVATE_KEY + "').style.display= show ? 'block' : 'none';\n" +
+            "}\n" +
             "function ecKey() {\n" +
-            "  document.getElementById('" + RequestServlet.JWS_PRIVATE_KEY + "').style.display='block';\n" +
+            "  showCert(false);\n" +
+            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_EC_KEY + ");\n" +
+            "  showPriv(true);\n" +
+            "}\n" +
+            "function rsaKey() {\n" +
+            "  showCert(false);\n" +
+            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
+            "  showPriv(true);\n" +
+            "}\n" +
+            "function certPath() {\n" +
+            "  showPriv(true);\n" +
+            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
+            "  fill('" + RequestServlet.JWS_CERT_PATH + "', " + JS_CERT_PATH + ");\n" +
+            "  showCert(true);\n" +
             "}\n");
         HTML.requestPage(response, 
                          js.toString(),
                          html);
     }
     
+    private void createPEMJS(StringBuilder js, String name, StringBuilder pem) {
+        js.append("var ")
+          .append(name)
+          .append(" = '")
+          .append(HTML.javaScript(pem.toString()))
+          .append("';\n");
+    }
+
     private String radioButton(boolean checked, 
                                GenerateSignature.ACTION action,
                                String onClick) {

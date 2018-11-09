@@ -114,6 +114,7 @@ public class HTML {
 
     static void output(HttpServletResponse response, String html)
             throws IOException, ServletException {
+        System.out.println(html);
         response.setContentType("text/html; charset=utf-8");
         response.setHeader("Pragma", "No-Cache");
         response.setDateHeader("EXPIRES", 0);
@@ -210,7 +211,7 @@ public class HTML {
                         "Your Browser Doesn't Support WebCrypto :-("));
     }
 
-    private static String javaScript(String string) {
+    static String javaScript(String string) {
         StringBuilder s = new StringBuilder();
         for (char c : string.toCharArray()) {
             if (c == '\n') {
