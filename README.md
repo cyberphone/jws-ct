@@ -51,23 +51,21 @@ If you want to test the signature scheme without any installation or downloading
 demo is currently available at: https://mobilepki.org/jws-jcs/home
 
 ### Detailed Signing Operation
-1. Create or parse the JSON data to be signed
-2. Serialize the data using *existing* JSON tools
-3. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-00#section-3.2 on the serialized data
-4. Use the result of the previous step as "JWS Payload" to the JWS signature process described in
+1. Create or parse the JSON data to be signed using *existing* JSON tools
+2. Apply the canonicalizing filter process described in
+ https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-01#section-3.2 on the created data
+3. Use the result of the previous step as "JWS Payload" to the JWS signature process described in
 https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization mode
-5. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
-6. Serialize the completed (now signed) JSON object using *existing* JSON tools
+4. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
+5. Serialize the completed (now signed) JSON object using *existing* JSON tools
 
 ### Detailed Validation Operation
 1. Parse the signed JSON data using *existing* JSON tools
-2. Read and save the JWS string from the designated signature property
-3. Remove the signature property from the parsed JSON object
-4. Serialize the remaining JSON data using *existing* JSON tools
-5. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-00#section-3.2 on the serialized data
-6. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
+2. Read and save the JWS string from the *designated signature property*
+3. Remove the *designated signature property* from the parsed JSON data
+4. Apply the canonicalizing filter process described in
+ https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-01#section-3.2 on the remaining data
+5. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
 https://tools.ietf.org/html/rfc7515#appendix-F
 
 ### Available Canonicalization Software
