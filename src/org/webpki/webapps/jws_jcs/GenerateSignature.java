@@ -17,17 +17,18 @@
 package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
+import org.webpki.crypto.SignatureWrapper;
 import org.webpki.crypto.SymKeySignerInterface;
 import org.webpki.crypto.SymKeyVerifierInterface;
-
 import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
-
 import org.webpki.util.ArrayUtil;
 import org.webpki.util.Base64URL;
 
@@ -62,11 +63,13 @@ public class GenerateSignature {
             (byte) 0x74, (byte) 0x34, (byte) 0x69, (byte) 0x09 };
 
     ACTION action;
-    boolean keyInlining;
+    JSONObjectWriter jwsHeader;
+    KeyPair keyPair;
 
-    GenerateSignature(ACTION action, boolean keyInlining) {
+    GenerateSignature(ACTION action, JSONObjectWriter jwsHeader, KeyPair keyPair) {
         this.action = action;
-        this.keyInlining = keyInlining;
+        this.jwsHeader = jwsHeader;
+        this.keyPair = keyPair;
     }
 
     static class SymmetricOperations implements SymKeySignerInterface, SymKeyVerifierInterface {
@@ -90,20 +93,7 @@ public class GenerateSignature {
         }
     }
 
-    byte[] sign(JSONObjectWriter wr) throws IOException {
-        AsymSignatureHelper ash = null;
-        JSONObjectWriter jwsHeader = new JSONObjectWriter();
-        jwsHeader.setString(JSONCryptoHelper.ALG_JSON, action.algorithm);
-        if (action == ACTION.SYM) {
-            jwsHeader.setString(JSONCryptoHelper.KID_JSON, KEY_NAME);
-        } else if (action == ACTION.X509) {
-            jwsHeader.setCertificatePath((ash = JWSService.clientkey_rsa).getCertificatePath());
-        } else {
-            ash = action == ACTION.RSA ? JWSService.clientkey_rsa : JWSService.clientkey_ec;
-            if (keyInlining) {
-                jwsHeader.setPublicKey(ash.getPublicKey());
-            }
-        }
+    byte[] sign(JSONObjectWriter wr) throws IOException, GeneralSecurityException {
         String jwsHeaderB64 = Base64URL.encode(jwsHeader.serializeToBytes(JSONOutputFormats.NORMALIZED));
         String payloadB64 = Base64URL.encode(wr.serializeToBytes(JSONOutputFormats.CANONICALIZED));
         String toBeSigned = jwsHeaderB64 + "." + payloadB64;
@@ -114,10 +104,10 @@ public class GenerateSignature {
                 MACAlgorithms.getAlgorithmFromId(action.algorithm, AlgorithmPreferences.JOSE)
                     .digest(SYMMETRIC_KEY, toBeSignedBin);
         } else {
-            ash.setECDSASignatureEncoding(false);
-            signatureValue = ash.signData(toBeSignedBin, 
-                AsymSignatureAlgorithms
-                    .getAlgorithmFromId(action.algorithm, AlgorithmPreferences.JOSE));
+            signatureValue = 
+                new SignatureWrapper(AsymSignatureAlgorithms.getAlgorithmFromId(action.algorithm, 
+                                     AlgorithmPreferences.JOSE),keyPair.getPrivate())
+                    .update(toBeSignedBin).sign();
         }
         wr.setString(JSONCryptoHelper.SIGNATURE_JSON,
                      jwsHeaderB64 + ".." + Base64URL.encode(signatureValue));

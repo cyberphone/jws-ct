@@ -52,17 +52,14 @@ public class JavaScriptSignatureServlet extends HttpServlet {
         JSONObjectReader parsed_json = JSONParser.parse(signed_json);
         HTML.printResultPage(
                 response,
-                "<table>"
-                        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">Signed JavaScript Object<br>&nbsp;</td></tr>"
-                        + "<tr><td align=\"left\">"
-                        + HTML.fancyBox(
+                        HTML.fancyBox(
                                 "verify",
                                 new String(
                                         new JSONObjectWriter(parsed_json)
                                                 .serializeToBytes(JSONOutputFormats.PRETTY_JS_NATIVE),
-                                        "UTF-8").replace("\n", "<br>").replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;"))
-                        + "</td></tr>"
-                        + "</table>");
+                                        "UTF-8").replace("\n", "<br>").replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;"),
+                                "Signed JavaScript Object")
+);
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -70,7 +67,7 @@ public class JavaScriptSignatureServlet extends HttpServlet {
         byte[] data = null;
         if (request.getContentType().startsWith(
                 "application/x-www-form-urlencoded")) {
-            data = Base64URL.decode(request.getParameter(RequestServlet.JWS_ARGUMENT));
+            data = Base64URL.decode(request.getParameter(RequestServlet.JWS_CORE));
         } else {
             if (!request.getContentType().startsWith("application/json")) {
                 error(response, "Request didn't have the proper mime-type: "

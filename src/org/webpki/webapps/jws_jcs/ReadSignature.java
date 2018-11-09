@@ -133,7 +133,7 @@ public class ReadSignature {
             } else {
                 publicKey = jwsHeader.hasProperty(JSONCryptoHelper.JWK_JSON) ?
                            jwsHeader.getPublicKey() : (asymAlg.isRsa() ? 
-                           JWSService.clientkey_rsa : JWSService.clientkey_ec).getPublicKey();
+                           JWSService.clientkey_rsa : JWSService.clientkey_ec).keyPair.getPublic();
                 KeyAlgorithms key_alg = KeyAlgorithms.getKeyAlgorithm(publicKey);
                 debug.append("Asymmetric key signature validated for:\n")
                      .append(key_alg.isECKey() ? "EC" : "RSA")

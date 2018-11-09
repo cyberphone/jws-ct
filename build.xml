@@ -48,7 +48,7 @@
   </target>
 
   <target name="tomcat">
-  	<antcall target="build"/>
+    <antcall target="build"/>
     <copy file="${dist.dir}/${application}" todir="${env.CATALINA_HOME}/webapps" overwrite="true" preservelastmodified="true"/>
   </target>
 
@@ -56,12 +56,12 @@
     <mkdir dir="${dist.dir}"/>
     <delete dir="${temp.dir}"/>
     <mkdir dir="${temp.dir}"/>
-    <fixcrlf srcdir="${src.dir}"
+    <fixcrlf srcdir="."
        tab="remove"
        tablength="4"
        eol="lf"
        eof="remove"
-       includes="**/*.java"/>
+       includes="**/*.java, **/*.css, **/*.svg, **/*.xml"/>
     <copy file="web.xml" todir="${temp.dir}"/>
     <javac debug="${debug}"
            source="${javaversion}"
@@ -69,23 +69,23 @@
            srcdir="${src.dir}"
            destdir="${temp.dir}"
            includeAntRuntime="false">
-		<classpath>
-			  <fileset dir="${webpki.lib.dir}">
-		        <include name="*.jar"/>
-		     </fileset>
-		     <fileset dir="${third.party.lib.dir}">
-			    <include name="*.jar"/>
-		      </fileset>
-		</classpath>
+        <classpath>
+              <fileset dir="${webpki.lib.dir}">
+                <include name="*.jar"/>
+             </fileset>
+             <fileset dir="${third.party.lib.dir}">
+                <include name="*.jar"/>
+              </fileset>
+        </classpath>
     </javac>
     <property name="clientkey" value="${clientkey_rsa}"/>
     <property name="bouncycastle.first" value="true"/>
     <replace file="${temp.dir}/web.xml">
-	  <replacefilter token="@bouncycastle-first@" value="${bouncycastle.first}"/>
-	  <replacefilter token="@key-password@" value="${keypassword}"/>
-	  <replacefilter token="@clientkey-rsa@" value="${clientkey_rsa}${keyfilext}"/>
-	  <replacefilter token="@clientkey-ec@" value="${clientkey_ec}${keyfilext}"/>
-	</replace>
+      <replacefilter token="@bouncycastle-first@" value="${bouncycastle.first}"/>
+      <replacefilter token="@key-password@" value="${keypassword}"/>
+      <replacefilter token="@clientkey-rsa@" value="${clientkey_rsa}${keyfilext}"/>
+      <replacefilter token="@clientkey-ec@" value="${clientkey_ec}${keyfilext}"/>
+    </replace>
     <war destfile="${dist.dir}/${application}" webxml="${temp.dir}/web.xml">
       <classes dir="${temp.dir}">
          <exclude name="web.xml"/>
@@ -117,15 +117,15 @@
  Optionally you can specify -Duu=0 which deletes ${appcorename}&#10;
  and replaces the directory with the unzipped content&#10;
 ***************************************************************&#10;"/>
-	<echo message="Producing ${appcorename} .zip and .zip.SHA1 files..."/> 
-   	<delete file="${dd}/${appcorename}.zip" failonerror="false"/>
+    <echo message="Producing ${appcorename} .zip and .zip.SHA1 files..."/> 
+    <delete file="${dd}/${appcorename}.zip" failonerror="false"/>
     <zip destfile="${dd}/${appcorename}.zip">
       <zipfileset dir="." prefix="${appcorename}">
-       	<exclude name="/**/.*"/>
+        <exclude name="/**/.*"/>
         <exclude name="/.tmp/**"/>
-       	<exclude name="**/.settings/**"/>
-       	<exclude name="**/bin/**"/>
-       	<exclude name="dist/**"/>
+        <exclude name="**/.settings/**"/>
+        <exclude name="**/bin/**"/>
+        <exclude name="dist/**"/>
       </zipfileset>
     </zip>
     <checksum file="${dd}/${appcorename}.zip" fileext=".SHA1" algorithm="sha1" forceOverwrite="yes"/>

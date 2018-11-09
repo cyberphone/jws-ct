@@ -34,34 +34,21 @@ public class HTML {
     static final String SIGNUP_BAD_COLOR = "#F78181";
     static final String BOX_SHADDOW = "box-shadow:5px 5px 5px #C0C0C0";
     static final String KG2_DEVID_BASE = "Field";
-    static final String HOME = "><a href=\"home\" title=\"Home\" style=\"position:absolute;top:15px;right:15px;z-index:5;visibility:visible\">Home</a";
 
-    static final String STATIC_BOX = "width:800pt;background:#F8F8F8;";
-    static final String COMMON_BOX = "word-break:break-all;border-width:1px;border-style:solid;border-color:grey;padding:10pt;box-shadow:3pt 3pt 3pt #D0D0D0";
+    static final String STATIC_BOX = "background:#F8F8F8;";
+    static final String COMMON_BOX = "box-sizing:border-box;width:100%;word-break:break-all;border-width:1px;border-style:solid;border-color:grey;padding:10pt;box-shadow:3pt 3pt 3pt #D0D0D0";
 
-    static final String TEXT_BOX = "background:#FFFFD0;width:805pt;";
+    static final String TEXT_BOX = "background:#FFFFD0;";
 
     static final String SAMPLE_DATA = "{\n"
         + "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n"
         + "  &quot;otherProperties&quot;: [2000, true]\n" + "}";
 
-    static final String HTML_INIT = "<!DOCTYPE html>"
-        + "<html><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">"
-        + "<meta name=\"viewport\" content=\"initial-scale=1.0\"/>"
-        + "<title>JSON Signature Demo</title>"
-        + "<style type=\"text/css\">html {overflow:auto} html, body {margin:0px;padding:0px;height:100%} "
-        + "body {font-size:8pt;color:#000000;font-family:verdana,arial;background-color:white} "
-        + "h2 {font-weight:bold;font-size:12pt;color:#000000;font-family:arial,verdana,helvetica} "
-        + "h3 {font-weight:bold;font-size:11pt;color:#000000;font-family:arial,verdana,helvetica} "
-        + "a {font-weight:bold;font-size:8pt;color:blue;font-family:arial,verdana;text-decoration:none} "
-        + "input {font-weight:normal;font-size:8pt;font-family:verdana,arial} "
-        + "td {font-size:8pt;font-family:verdana,arial} "
-        + ".smalltext {font-size:6pt;font-family:verdana,arial} "
-        + "button {font-weight:normal;font-size:8pt;font-family:verdana,arial;padding-top:2px;padding-bottom:2px} "
-        + ".headline {font-weight:bolder;font-size:10pt;font-family:arial,verdana} "
-        + ".keytable {border-collapse:collapse} "
-        + ".keytable td {border-style:solid;border-color:#a9a9a9;border-width:0px} "
-        + "</style>";
+    static final String HTML_INIT = "<!DOCTYPE html>" +
+        "<html><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">" + 
+        "<meta name=\"viewport\" content=\"initial-scale=1.0\"/>" + 
+        "<title>JSON Signature Demo</title>" + 
+        "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">";
 
     static String encode(String val) {
         if (val != null) {
@@ -109,23 +96,19 @@ public class HTML {
         return result.toString();
     }
 
-    static String getHTML(String javascript, String bodyscript, String box) {
+    static String getHTML(String javascript, String box) {
         StringBuilder s = new StringBuilder(HTML_INIT);
         if (javascript != null) {
             s.append("<script type=\"text/javascript\">").append(javascript)
                     .append("</script>");
         }
-        s.append("</head><body");
-        if (bodyscript != null) {
-            s.append(' ').append(bodyscript);
-        }
-        s.append(
-                "><div style=\"cursor:pointer;padding:2pt 0 0 0;position:absolute;top:15pt;left:15pt;z-index:5;visibility:visible;width:100pt;"
+        s.append("</head><body>" +
+        "<div style=\"margin:10pt 0 20pt 10pt;cursor:pointer;padding:2pt 0 0 0;width:100pt;"
         + "height:47pt;border-width:1px;border-style:solid;border-color:black;box-shadow:3pt 3pt 3pt #D0D0D0\""
-        + " onclick=\"document.location.href='https://github.com/cyberphone'\" title=\"Home of WebPKI.org\">")
+        + " onclick=\"document.location.href='home'\" title=\"Home sweet home...\">")
                 .append(JWSService.logotype)
-                .append("</div><table cellapdding=\"0\" cellspacing=\"0\" width=\"100%\" height=\"100%\">")
-                .append(box).append("</table></body></html>");
+                .append("</div>")
+                .append(box).append("</body></html>");
         return s.toString();
     }
 
@@ -145,16 +128,33 @@ public class HTML {
         }
         return value;
     }
-
-    public static String fancyBox(String id, String content) {
-        return "<div id=\"" + id + "\" style=\"" + STATIC_BOX + COMMON_BOX
-                + "\">" + content + "</div>";
+    
+    public static String boxHeader(String id, String text, boolean visible) {
+        return new StringBuilder("<div id=\"")
+            .append(id)
+            .append("\" style=\"padding:10pt 10pt 0 10pt")
+            .append(visible ? "" : ";display:none")
+            .append("\">" +
+               "<div style=\"padding-bottom:3pt\">" + text + ":</div>").toString();
     }
 
-    public static String fancyText(int rows, String content) {
-        return "<textarea style=\"margin-top:3pt;" + TEXT_BOX + COMMON_BOX
-        + "\" rows=\"" + rows + "\" maxlength=\"100000\" name=\""
-        + RequestServlet.JWS_ARGUMENT + "\">" + content + "</textarea>";
+    public static String fancyBox(String id, String content, String header) {
+        return boxHeader(id, header, true)
+            + "<div id=\"" + id + "\" style=\"" + STATIC_BOX + COMMON_BOX
+            + "\">" + content + "</div></div>";
+    }
+
+    public static String fancyText(boolean visible, String id, int rows, String content, String header) {
+        return boxHeader(id, header, visible) +
+            "<textarea style=\"" + TEXT_BOX + COMMON_BOX +
+            "\" rows=\"" + rows + "\" maxlength=\"100000\" name=\"" +
+            id + "\">" + content + "</textarea></div>";
+    }
+    
+    static void requestPage(HttpServletResponse response, 
+                            String javaScript,
+                            StringBuilder html) throws IOException, ServletException {
+        HTML.output(response, HTML.getHTML(javaScript, html.toString()));
     }
 
     public static void homePage(HttpServletResponse response, String baseurl)
@@ -163,9 +163,7 @@ public class HTML {
                 response,
                 HTML.getHTML(
                         null,
-                        null,
-                        "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">"
-        + "<table style=\"max-width=\"300px\">"
+          "<table style=\"max-width=\"300px\">"
         + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">JSON Clear Text Signature<br>&nbsp;</td></tr>"
         + "<tr><td align=\"left\"><a href=\""
         + baseurl
@@ -180,28 +178,27 @@ public class HTML {
         + "/webcrypto\">Create a JWS-JCS using WebCrypto</a></td></tr>"
         + "<tr><td>&nbsp;</td></tr>"
         + "<tr><td align=\"left\"><a target=\"_blank\" href=\"https://github.com/cyberphone/jws-jcs#combining-detached-jws-with-jcs-json-canonicalization-scheme\">JWS-JCS Documentation</a></td></tr>"
-        + "</table></td></tr>"));
+        + "</table>"));
     }
 
     public static void verifyPage(HttpServletResponse response,
-            HttpServletRequest request, String signature) throws IOException,
-            ServletException {
+                                  HttpServletRequest request,
+                                  String signature) throws IOException, ServletException {
         HTML.output(
                 response,
                 HTML.getHTML(
                         null,
-                        HOME,
-                        "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">"
-        + "<table cellpadding=\"0\" cellspacing=\"0\"><form method=\"POST\" action=\""
-        + request.getRequestURL().toString()
-        + "\">"
-        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">Testing JSON Signatures<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\">Paste a signed JSON object in the text box or try with the default:</td></tr>"
-        + "<tr><td align=\"left\">"
-        + fancyText(20, encode(signature))
-        + "</td></tr>"
-        + "<tr><td align=\"center\">&nbsp;<br><input type=\"submit\" value=\"Verify JSON Signature!\" name=\"sumbit\"></td></tr>"
-        + "</form></table></td></tr>"));
+          "<form method=\"POST\" action=\"" +
+          request.getRequestURL().toString() +
+          "\">" +
+          "<div class=\"header\">Testing JSON Signatures</div>" +
+          fancyText(true,
+                    RequestServlet.JWS_CORE,
+                    20, 
+                    encode(signature),
+                    "Paste a signed JSON object in the text box or try with the default") +
+          "<input type=\"submit\" value=\"Verify JSON Signature!\" name=\"sumbit\">" +
+          "</form>"));
     }
 
     public static void noWebCryptoPage(HttpServletResponse response)
@@ -210,8 +207,7 @@ public class HTML {
                 response,
                 HTML.getHTML(
                         null,
-                        null,
-                        "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">Your Browser Doesn't Support WebCrypto :-(</td></tr>"));
+                        "Your Browser Doesn't Support WebCrypto :-("));
     }
 
     private static String javaScript(String string) {
@@ -233,7 +229,6 @@ public class HTML {
         + "a {font-weight:bold;font-size:8pt;color:blue;font-family:arial,verdana;text-decoration:none} "
         + "</style></head>\n"
         + "<body style=\"padding:10pt;font-size:8pt;color:#000000;font-family:verdana,arial;background-color:white\""
-        + HOME
         + ">\n"
         + "<h3>WebCrypto / JWS-JCS Demo</h3>\n\n"
         + "This demo only relies on ES6 and WebCrypto features and does not refer to any external libraries either."
@@ -453,7 +448,7 @@ public class HTML {
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "function verifySignatureOnServer() {\n"
         + "  document.location.href = 'request?"
-        + RequestServlet.JWS_ARGUMENT
+        + RequestServlet.JWS_CORE
         + "="
         + "' + "
         + "convertToBase64URL(convertToUTF8(JSON.stringify(jsonObject)));\n"
@@ -468,73 +463,15 @@ public class HTML {
                 response,
                 HTML.getHTML(
                         null,
-                        HOME,
-                        "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">"
-        + "<table style=\"max-width=\"300px\">"
+         "<table style=\"max-width=\"300px\">"
         + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana;color:red\">Something went wrong...<br>&nbsp;</td></tr>"
         + "<tr><td align=\"left\">"
         + newLines2HTML(encode(error)) + "</td></tr>"
-        + "</table></td></tr>"));
+        + "</table>"));
     }
 
     public static void printResultPage(HttpServletResponse response,
             String message) throws IOException, ServletException {
-        HTML.output(response, HTML.getHTML(null, HOME,
-                "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">"
-                        + message + "</td></tr>"));
+        HTML.output(response, HTML.getHTML(null, message));
     }
-
-    public static void createPage(HttpServletResponse response,
-            HttpServletRequest request) throws IOException, ServletException {
-        HTML.output(
-                response,
-                HTML.getHTML(
-                        null,
-                        HOME,
-                        "<tr><td width=\"100%\" align=\"center\" valign=\"middle\">"
-        + "<table cellpadding=\"0\" cellspacing=\"0\"><form method=\"POST\" action=\""
-        + request.getRequestURL().toString()
-        + "\">"
-        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">JSON Signature Creation<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\">Paste an unsigned JSON object in the text box or try with the default:</td></tr>"
-        + "<tr><td align=\"left\">"
-        + fancyText(
-                10,
-                "{\n"
-                        + ""
-                        + "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n"
-                        + "  &quot;otherProperties&quot;: [2e+3, true]\n"
-                        + "}")
-        + "</td></tr>"
-        + "<tr><td align=\"center\"><table class=\"keytable\" style=\"margin-top:8pt\">"
-        + "<tr><td valign=\"middle\" rowspan=\"5\">Signing&nbsp;parmeters:&nbsp;</td><td align=\"left\" style=\"padding-left:2px\"><input type=\"radio\" name=\""
-        + CreateServlet.KEY_TYPE
-        + "\" value=\""
-        + GenerateSignature.ACTION.SYM
-        + "\"></td><td colspan=\"3\">Symmetric key</td></tr>"
-        + "<tr><td align=\"center\" style=\"border-width:1px 0 0 1px\"><input type=\"radio\" name=\""
-        + CreateServlet.KEY_TYPE
-        + "\" value=\""
-        + GenerateSignature.ACTION.EC
-        + "\" checked></td><td style=\"border-width:1px 0 0 0\">EC Key (P-256)</td><td rowspan=\"2\" align=\"right\" style=\"border-width:1px 0 1px 0\"><input type=\"checkbox\" name=\""
-        + CreateServlet.KEY_INLINING
-        + "\" value=\"false\"></td><td rowspan=\"2\" style=\"border-width:1px 1px 1px 0\">Inlined public key (JWK)&nbsp;</td></tr>"
-        + "<tr><td align=\"center\" style=\"border-width:0 0 1px 1px\"><input type=\"radio\" name=\""
-        + CreateServlet.KEY_TYPE
-        + "\" value=\""
-        + GenerateSignature.ACTION.RSA
-        + "\"></td><td style=\"border-width:0 0 1px 0\">RSA Key (2048)</td></tr>"
-        + "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"radio\" name=\""
-        + CreateServlet.KEY_TYPE
-        + "\" value=\""
-        + GenerateSignature.ACTION.X509
-        + "\"></td><td colspan=\"3\">X.509 Certificate/Private key</td></tr>"
-        + "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"checkbox\" name=\""
-        + CreateServlet.JS_FLAG
-        + "\" value=\"true\"></td><td colspan=\"3\">Serialize as JavaScript (but do not verify)</td></tr>"
-        + "</table></td></tr>"
-        + "<tr><td align=\"center\">&nbsp;<br><input type=\"submit\" value=\"Create JSON Signature!\" name=\"sumbit\"></td></tr>"
-        + "</form></table></td></tr>"));
-    }
-
 }

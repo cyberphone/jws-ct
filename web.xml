@@ -33,7 +33,7 @@
      </listener>
 
     <servlet>
-	    <servlet-name>RequestServlet</servlet-name>
+        <servlet-name>RequestServlet</servlet-name>
         <servlet-class>org.webpki.webapps.jws_jcs.RequestServlet</servlet-class>
     </servlet>
 

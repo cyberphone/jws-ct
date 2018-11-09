@@ -17,15 +17,11 @@
 package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
-
 import java.security.GeneralSecurityException;
-
 import java.util.Vector;
-
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
-
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,9 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
-
 import org.webpki.util.Base64URL;
-
 import org.webpki.webutil.ServletUtil;
 
 public class RequestServlet extends HttpServlet {
@@ -43,7 +37,9 @@ public class RequestServlet extends HttpServlet {
 
     static Logger logger = Logger.getLogger(RequestServlet.class.getName());
 
-    static final String JWS_ARGUMENT = "JWS";
+    static final String JWS_CORE        = "JWS";
+    static final String JWS_ADDITIONAL  = "additional";
+    static final String JWS_PRIVATE_KEY = "private";
 
     static void error(HttpServletResponse response, String error_message)
             throws IOException, ServletException {
@@ -69,24 +65,17 @@ public class RequestServlet extends HttpServlet {
         }
         HTML.printResultPage(
                 response,
-                "<table>"
-        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">Successful Verification!<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\">"
-        + HTML.newLines2HTML(doc.getResult())
-        + "</td></tr>"
-        + "<tr><td align=\"left\">Signed JSON Object:</td></tr>"
-        + "<tr><td align=\"left\">"
-        + HTML.fancyBox("verify", prettySignature)
-        + "</td></tr>"
-        + "<tr><td align=\"left\">&nbsp;<br>Decoded JWS Header:</td></tr>"
-        + "<tr><td align=\"left\">"
-        + HTML.fancyBox("header", doc.jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML))
-        + "</td></tr>"
-        + "<tr><td align=\"left\">&nbsp;<br>Canonicalized JSON Data (with possible line breaks for display purposes only):</td></tr>"
-        + "<tr><td align=\"left\">"
-        + HTML.fancyBox("canonicalized", HTML.encode(new String(doc.canonicalizedData, "UTF-8")))
-        + "</td></tr>"
-        + "</table>");
+            "<div class=\"header\"> Signature Successfully Validated</div>" +
+            "<div style=\"margin-left:5%\">" +
+              HTML.newLines2HTML(doc.getResult()) +
+            "</div>" + 
+            HTML.fancyBox("verify", prettySignature, "Signed JSON Object") +
+            HTML.fancyBox("header", 
+                          doc.jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
+                          "Decoded JWS Header") +
+            HTML.fancyBox("canonicalized",
+                          HTML.encode(new String(doc.canonicalizedData, "UTF-8")),
+                          "Canonicalized JSON Data (with possible line breaks for display purposes only)"));
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -94,7 +83,7 @@ public class RequestServlet extends HttpServlet {
         byte[] data = null;
         if (request.getContentType().startsWith(
                 "application/x-www-form-urlencoded")) {
-            data = Base64URL.decode(request.getParameter(JWS_ARGUMENT));
+            data = Base64URL.decode(request.getParameter(JWS_CORE));
         } else {
             if (!request.getContentType().startsWith("application/json")) {
                 error(response, "Request didn't have the proper mime-type: "
@@ -113,9 +102,9 @@ public class RequestServlet extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        String json = request.getParameter(JWS_ARGUMENT);
+        String json = request.getParameter(JWS_CORE);
         if (json == null) {
-            error(response, "Request didn't contain a \"" + JWS_ARGUMENT
+            error(response, "Request didn't contain a \"" + JWS_CORE
                     + "\" argment");
             return;
         }

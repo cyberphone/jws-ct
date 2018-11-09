@@ -19,6 +19,18 @@ package org.webpki.webapps.jws_jcs;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
+
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+
+import java.util.Enumeration;
+import java.util.Vector;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,16 +48,38 @@ public class JWSService extends InitPropertyReader implements ServletContextList
 
     static Logger logger = Logger.getLogger(JWSService.class.getName());
 
-    static String key_password;
+    static KeyHolder clientkey_rsa;
 
-    static AsymSignatureHelper clientkey_rsa;
-
-    static AsymSignatureHelper clientkey_ec;
+    static KeyHolder clientkey_ec;
 
     static String logotype;
     
     static String sampleSignature;
-    
+
+    class KeyHolder {
+
+        X509Certificate[] certificatePath;
+        KeyPair keyPair;
+
+        public KeyHolder(String keyName, String key_password) throws KeyStoreException, IOException, GeneralSecurityException {
+            KeyStore ks = KeyStoreReader.loadKeyStore(getResource(getPropertyString(keyName)), key_password);
+            Enumeration<String> aliases = ks.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                if (ks.isKeyEntry(alias)) {
+                    Vector<X509Certificate> certificates = new Vector<X509Certificate>();
+                    for (Certificate certificate : ks.getCertificateChain(alias)) {
+                        certificates.add((X509Certificate) certificate);
+                    }
+                    certificatePath = certificates.toArray(new X509Certificate[0]);
+                    keyPair = new KeyPair(certificatePath[0].getPublicKey(),
+                            (PrivateKey) ks.getKey(alias, key_password.toCharArray()));
+                    return;
+                }
+            }
+        }
+    }
+
     InputStream getResource(String name) throws IOException {
         InputStream is = this.getClass().getResourceAsStream(name);
         if (is == null) {
@@ -84,13 +118,9 @@ public class JWSService extends InitPropertyReader implements ServletContextList
             // //////////////////////////////////////////////////////////////////////////////////////////
             CustomCryptoProvider
                     .forcedLoad(getPropertyBoolean("bouncycastle_first"));
-            key_password = getPropertyString("key_password");
-            clientkey_rsa = new AsymSignatureHelper(KeyStoreReader.loadKeyStore(
-                    getResource(getPropertyString("clientkey_rsa")),
-                    key_password));
-            clientkey_ec = new AsymSignatureHelper(KeyStoreReader.loadKeyStore(
-                    getResource(getPropertyString("clientkey_ec")),
-                    key_password));
+            String key_password = getPropertyString("key_password");
+            clientkey_rsa = new KeyHolder("clientkey_rsa", key_password);
+            clientkey_ec = new KeyHolder("clientkey_ec", key_password);
 
             logger.info("JWS-JWS Demo Successfully Initiated");
         } catch (Exception e) {

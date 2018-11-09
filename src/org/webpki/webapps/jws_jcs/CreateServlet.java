@@ -17,18 +17,19 @@
 package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONParser;
-
 import org.webpki.util.Base64URL;
 
 public class CreateServlet extends HttpServlet {
@@ -40,16 +41,104 @@ public class CreateServlet extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        HTML.createPage(response, request);
+        StringBuilder html = new StringBuilder(
+                "<form name=\"shoot\" method=\"POST\" action=\"create\">" +
+                "<div class=\"header\">JSON Signature Creation</div>" +
+                HTML.fancyText(
+                        true,
+                        RequestServlet.JWS_CORE,
+                        10,
+                        "{\n" +
+                        "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n" +
+                        "  &quot;otherProperties&quot;: [2e+3, true]\n" +
+                        "}",
+                        "Paste an unsigned JSON object in the text box or try with the default") +
+                "<div style=\"display:flex;justify-content:center;padding-top:15pt\">" +
+                "<table class=\"keytable\">" +
+                "<tr><td valign=\"middle\" rowspan=\"5\">Signing&nbsp;parmeters:&nbsp;</td><td align=\"left\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
+                CreateServlet.KEY_TYPE +
+                "\" value=\"" +
+                GenerateSignature.ACTION.SYM +
+                "\"></td><td colspan=\"3\">Symmetric key</td></tr>" +
+                "<tr><td align=\"center\" style=\"border-width:1px 0 0 1px\">")
+            .append(radioButton(true, 
+                    GenerateSignature.ACTION.EC,
+                    "ecKey()"))
+            .append(
+                "</td><td style=\"border-width:1px 0 0 0\">EC Key (P-256)</td>" +
+                "<td rowspan=\"2\" align=\"right\" style=\"border-width:1px 0 1px 0\"><input type=\"checkbox\" name=\"" +
+                CreateServlet.KEY_INLINING +
+                "\" value=\"false\"></td><td rowspan=\"2\" style=\"border-width:1px 1px 1px 0\">Inlined public key (JWK)&nbsp;</td></tr>" +
+                "<tr><td align=\"center\" style=\"border-width:0 0 1px 1px\">")
+            .append(radioButton(false, 
+                    GenerateSignature.ACTION.RSA,
+                    "alert('hy')"))
+            .append(
+                "</td><td style=\"border-width:0 0 1px 0\">RSA Key (2048)</td></tr>" +
+                "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
+                CreateServlet.KEY_TYPE +
+                "\" value=\"" +
+                GenerateSignature.ACTION.X509 +
+                "\"></td><td colspan=\"3\">X.509 Certificate/Private key</td></tr>" +
+                "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"checkbox\" name=\"" +
+                CreateServlet.JS_FLAG +
+                "\" value=\"true\"></td><td colspan=\"3\">Serialize as JavaScript (but do not verify)</td></tr>" +
+                "</table></div>" +
+                "<div style=\"display:flex;justify-content:center\">" +
+                "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
+                "Create JSON Signature!" +
+                "</div>" +
+                "</div>");
+        html.append(
+                HTML.fancyText(false,
+                          RequestServlet.JWS_PRIVATE_KEY,
+                          4,
+                          "{\n" +
+                          "}",
+                          "Additional JWS header parameters (here expressed as properties of a JSON object)"));
+        html.append(
+                HTML.fancyText(true,
+                          RequestServlet.JWS_ADDITIONAL,
+                          4,
+                          "{\n" +
+                          "}",
+                          "Additional JWS header parameters (here expressed as properties of a JSON object)"))
+              .append("</form>");
+        StringBuilder js = new StringBuilder();
+        js.append(
+            "function ecKey() {\n" +
+            "  document.getElementById('" + RequestServlet.JWS_PRIVATE_KEY + "').style.display='block';\n" +
+            "}\n");
+        HTML.requestPage(response, 
+                         js.toString(),
+                         html);
+    }
+    
+    private String radioButton(boolean checked, 
+                               GenerateSignature.ACTION action,
+                               String onClick) {
+        return "<input type=\"radio\" name=\"" +
+                CreateServlet.KEY_TYPE +
+                "\"" +
+                (checked ? " checked" : "") +
+                " onclick=\"" +
+                onClick +
+                "\" value=\"" +
+                action.toString() +
+                "\">";
+    }
+
+    public static String getParameter(HttpServletRequest request, String parameter) throws IOException {
+        String string = request.getParameter(parameter);
+        if (string == null) {
+            throw new IOException("Missing data for: "+ parameter);
+        }
+        return string;
     }
 
     static public String getTextArea(HttpServletRequest request)
             throws IOException {
-        String string = request.getParameter(RequestServlet.JWS_ARGUMENT);
-        if (string == null) {
-            throw new IOException("Missing data for: "
-                    + RequestServlet.JWS_ARGUMENT);
-        }
+        String string = getParameter(request, RequestServlet.JWS_CORE);
         StringBuilder s = new StringBuilder();
         for (char c : string.toCharArray()) {
             if (c != '\r') {
@@ -63,6 +152,7 @@ public class CreateServlet extends HttpServlet {
             throws IOException, ServletException {
         request.setCharacterEncoding("UTF-8");
         String json_object = getTextArea(request);
+        JSONObjectReader additionalHeaderData = JSONParser.parse(getParameter(request, RequestServlet.JWS_ADDITIONAL));
         GenerateSignature.ACTION action = GenerateSignature.ACTION.EC;
         boolean jsFlag = request.getParameter(JS_FLAG) != null;
         boolean keyInlining = request.getParameter(KEY_INLINING) != null;
@@ -79,7 +169,23 @@ public class CreateServlet extends HttpServlet {
                 throw new IOException("The demo does not support signed arrays");
             }
             JSONObjectWriter writer = new JSONObjectWriter(reader);
-            String signed_json = new String(new GenerateSignature(action, keyInlining)
+            JSONObjectWriter jwsHeader = new JSONObjectWriter();
+            jwsHeader.setString(JSONCryptoHelper.ALG_JSON, action.algorithm);
+            for (String key : additionalHeaderData.getProperties()) {
+                jwsHeader.copyElement(key, key, additionalHeaderData);
+            }
+            KeyPair keyPair = null;
+            if (action == GenerateSignature.ACTION.SYM) {
+            } else if (action == GenerateSignature.ACTION.X509) {
+                jwsHeader.setCertificatePath(JWSService.clientkey_rsa.certificatePath);
+                keyPair = JWSService.clientkey_rsa.keyPair;
+            } else {
+                keyPair = (action == GenerateSignature.ACTION.RSA ? JWSService.clientkey_rsa : JWSService.clientkey_ec).keyPair;
+                if (keyInlining) {
+                    jwsHeader.setPublicKey(keyPair.getPublic());
+                }
+            }
+            String signed_json = new String(new GenerateSignature(action, jwsHeader, keyPair)
                     .sign(writer), "utf-8");
             int i = signed_json.lastIndexOf("\"sig");
             if (signed_json.charAt(i - 1) == ',') {
@@ -91,11 +197,11 @@ public class CreateServlet extends HttpServlet {
                     json_object.substring(j);
             RequestDispatcher rd = request
                     .getRequestDispatcher((jsFlag ? "jssignature?" : "request?")
-                            + RequestServlet.JWS_ARGUMENT
+                            + RequestServlet.JWS_CORE
                             + "="
                             + Base64URL.encode(signed_json.getBytes("utf-8")));
             rd.forward(request, response);
-        } catch (IOException e) {
+        } catch (IOException | GeneralSecurityException e) {
             HTML.errorPage(response, e.getMessage());
         }
     }
