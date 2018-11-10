@@ -41,6 +41,7 @@ public class RequestServlet extends HttpServlet {
     static final String JWS_ADDITIONAL  = "additional";
     static final String JWS_PRIVATE_KEY = "private";
     static final String JWS_CERT_PATH   = "certpath";
+    static final String JWS_SECRET_KEY  = "secret";
 
     static void error(HttpServletResponse response, String error_message)
             throws IOException, ServletException {

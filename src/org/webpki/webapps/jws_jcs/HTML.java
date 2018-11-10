@@ -145,11 +145,18 @@ public class HTML {
             + "\">" + content + "</div></div>";
     }
 
-    public static String fancyText(boolean visible, String id, int rows, String content, String header) {
+    public static String fancyText(boolean visible,
+                                   String id, 
+                                   int rows, 
+                                   String content,
+                                   String header) {
         return boxHeader(id, header, visible) +
-            "<textarea style=\"" + TEXT_BOX + COMMON_BOX +
-            "\" rows=\"" + rows + "\" maxlength=\"100000\" name=\"" +
-            id + "\">" + content + "</textarea></div>";
+            "<textarea" +
+            " rows=\"" + rows + "\" maxlength=\"100000\"" +
+            " style=\"" + TEXT_BOX + COMMON_BOX +
+            "\" name=\"" + id + "\">" + 
+            content +
+            "</textarea></div>";
     }
     
     static void requestPage(HttpServletResponse response, 

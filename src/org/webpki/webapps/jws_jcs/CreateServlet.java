@@ -31,6 +31,7 @@ import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONParser;
 import org.webpki.util.Base64URL;
+import org.webpki.util.DebugFormatter;
 
 public class CreateServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -39,6 +40,7 @@ public class CreateServlet extends HttpServlet {
     static final String JS_FLAG      = "js";
     static final String KEY_INLINING = "keyinlining";
     
+    static final String JS_SYM_KEY   = "symKeyHex";
     static final String JS_EC_KEY    = "ecPEM";
     static final String JS_RSA_KEY   = "rsaPEM";
     static final String JS_CERT_PATH = "certPEM";
@@ -59,11 +61,17 @@ public class CreateServlet extends HttpServlet {
                         "Paste an unsigned JSON object in the text box or try with the default") +
                 "<div style=\"display:flex;justify-content:center;padding-top:15pt\">" +
                 "<table class=\"keytable\">" +
-                "<tr><td valign=\"middle\" rowspan=\"5\">Signing parameters:&nbsp;</td><td align=\"left\" style=\"padding-left:2px\"><input type=\"radio\" name=\"" +
-                CreateServlet.KEY_TYPE +
-                "\" value=\"" +
-                GenerateSignature.ACTION.SYM +
-                "\"></td><td colspan=\"3\">Symmetric key</td></tr>" +
+                "<tr><td valign=\"middle\" rowspan=\"6\">Signing parameters:&nbsp;</td>" +
+                "<td align=\"left\" colspan=\"2\" style=\"padding-left:2px\">")
+            .append("ES256")
+            .append(
+                "</td><td colspan=\"2\" style=\"text-align:left\">Algorithm</td></tr>" +
+                "<td align=\"left\" style=\"padding-left:2px\">")
+            .append(radioButton(false,
+                    GenerateSignature.ACTION.SYM,
+                    "symKey()"))
+            .append(
+                "</td><td colspan=\"3\">Symmetric key</td></tr>" +
                 "<tr><td align=\"center\" style=\"border-width:1px 0 0 1px\">")
             .append(radioButton(true, 
                     GenerateSignature.ACTION.EC,
@@ -103,20 +111,27 @@ public class CreateServlet extends HttpServlet {
                           "Additional JWS header parameters (here expressed as properties of a JSON object)"))
             .append(
                 HTML.fancyText(false,
+                          RequestServlet.JWS_SECRET_KEY,
+                          1,
+                          "",
+                          "Secret key in hexadecimal format"))
+            .append(
+                HTML.fancyText(false,
                           RequestServlet.JWS_PRIVATE_KEY,
                           4,
-                          "{\n" +
-                          "}",
+                          "",
                           "Private key in PEM/PKCS #8 format"))
             .append(
                 HTML.fancyText(false,
                           RequestServlet.JWS_CERT_PATH,
                           4,
-                          "{\n" +
-                          "}",
+                          "",
                           "Certificate path in PEM format"))
-            .append("</form>");
+            .append(
+                "</form>" +
+                "<div style=\"padding:15pt\">Note: No data is stored on the server, it only passes it!</div>");
         StringBuilder js = new StringBuilder();
+        createPEMJS(js, JS_SYM_KEY, new StringBuilder(DebugFormatter.getHexString(GenerateSignature.SYMMETRIC_KEY)));
         createPEMJS(js, JS_EC_KEY, JWSService.clientkey_ec.getPrivateKeyPEM());
         createPEMJS(js, JS_RSA_KEY, JWSService.clientkey_rsa.getPrivateKeyPEM());
         createPEMJS(js, JS_CERT_PATH, JWSService.clientkey_rsa.getCertificatePathPEM());
@@ -130,20 +145,32 @@ public class CreateServlet extends HttpServlet {
             "function showPriv(show) {\n" +
             "  document.getElementById('" + RequestServlet.JWS_PRIVATE_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
+            "function showSym(show) {\n" +
+            "  document.getElementById('" + RequestServlet.JWS_SECRET_KEY + "').style.display= show ? 'block' : 'none';\n" +
+            "}\n" +
+            "function symKey() {\n" +
+            "  showCert(false);\n" +
+            "  showPriv(false);\n" +
+            "  showSym(true);\n" +
+            "  fill('" + RequestServlet.JWS_SECRET_KEY + "', " + JS_SYM_KEY + ");\n" +
+            "}\n" +
             "function ecKey() {\n" +
             "  showCert(false);\n" +
+            "  showSym(false);\n" +
             "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_EC_KEY + ");\n" +
             "  showPriv(true);\n" +
             "}\n" +
             "function rsaKey() {\n" +
             "  showCert(false);\n" +
+            "  showSym(false);\n" +
             "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
             "  showPriv(true);\n" +
             "}\n" +
             "function certPath() {\n" +
-            "  showPriv(true);\n" +
+            "  showSym(false);\n" +
             "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
             "  fill('" + RequestServlet.JWS_CERT_PATH + "', " + JS_CERT_PATH + ");\n" +
+            "  showPriv(true);\n" +
             "  showCert(true);\n" +
             "}\n");
         HTML.requestPage(response, 
