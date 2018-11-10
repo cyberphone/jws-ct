@@ -26,6 +26,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.webpki.crypto.AlgorithmPreferences;
+import org.webpki.crypto.AsymSignatureAlgorithms;
+import org.webpki.crypto.MACAlgorithms;
+import org.webpki.crypto.SignatureAlgorithms;
 import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
@@ -44,9 +48,41 @@ public class CreateServlet extends HttpServlet {
     static final String JS_EC_KEY    = "ecPEM";
     static final String JS_RSA_KEY   = "rsaPEM";
     static final String JS_CERT_PATH = "certPEM";
+    
+    class SelectAlg {
+        StringBuilder js;
+        String preSelected;
+        StringBuilder html = new StringBuilder("<select name=\"" +
+                RequestServlet.JWS_ALGORITHM + "\" id=\"" +
+                RequestServlet.JWS_ALGORITHM + "\" onchange=\"algChange(this.value)\">");
+        
+        SelectAlg(StringBuilder js, String preSelected) {
+            this.js = js;
+            this.preSelected = preSelected;
+        }
+
+        SelectAlg add(SignatureAlgorithms algorithm, String executor) throws IOException {
+            String algId = algorithm.getAlgorithmId(AlgorithmPreferences.JOSE);
+            html.append("<option value=\"")
+                .append(algId)
+                .append("\"")
+                .append(algId.equals(preSelected) ? " selected>" : ">")
+                .append(algId)
+                .append("</option>");
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return html.append("</select>").toString();
+        }
+    }
 
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+        String selected = "ES256";
+        StringBuilder js = new StringBuilder("\"use strict\";\n")
+            .append(JWSService.keyDeclarations);
         StringBuilder html = new StringBuilder(
                 "<form name=\"shoot\" method=\"POST\" action=\"create\">" +
                 "<div class=\"header\">JSON Signature Creation</div>" +
@@ -61,39 +97,45 @@ public class CreateServlet extends HttpServlet {
                         "Paste an unsigned JSON object in the text box or try with the default") +
                 "<div style=\"display:flex;justify-content:center;padding-top:15pt\">" +
                 "<table class=\"keytable\">" +
-                "<tr><td valign=\"middle\" rowspan=\"6\">Signing parameters:&nbsp;</td>" +
-                "<td align=\"left\" colspan=\"2\" style=\"padding-left:2px\">")
-            .append("ES256")
+                "<tr><td valign=\"middle\" rowspan=\"5\">Signing parameters:&nbsp;</td>" +
+                "<td colspan=\"4\"><div style=\"display:inline-block\">")
+            .append(new SelectAlg(js, selected)
+                 .add(MACAlgorithms.HMAC_SHA256,            "symKey()")
+                 .add(MACAlgorithms.HMAC_SHA384,            "symKey()")
+                 .add(MACAlgorithms.HMAC_SHA512,            "symKey()")
+                 .add(AsymSignatureAlgorithms.ECDSA_SHA256, "ecKey()")
+                 .add(AsymSignatureAlgorithms.ECDSA_SHA384, "ecKey()")
+                 .add(AsymSignatureAlgorithms.ECDSA_SHA512, "ecKey()")
+                 .add(AsymSignatureAlgorithms.RSA_SHA256,   "rsaKey()")
+                 .add(AsymSignatureAlgorithms.RSA_SHA384,   "rsaKey()")
+                 .add(AsymSignatureAlgorithms.RSA_SHA512,   "rsaKey()")
+                 .toString())
             .append(
-                "</td><td colspan=\"2\" style=\"text-align:left\">Algorithm</td></tr>" +
-                "<td align=\"left\" style=\"padding-left:2px\">")
+                "</div><div style=\"display:inline-block;padding-left:5pt\">Algorithm</div></td></tr>" +
+                "<tr><td style=\"padding-left:1px\">")
             .append(radioButton(false,
                     GenerateSignature.ACTION.SYM,
                     "symKey()"))
             .append(
                 "</td><td colspan=\"3\">Symmetric key</td></tr>" +
-                "<tr><td align=\"center\" style=\"border-width:1px 0 0 1px\">")
+                "<tr><td style=\"border-width:1px 0 1px 1px\">")
             .append(radioButton(true, 
                     GenerateSignature.ACTION.EC,
-                    "ecKey()"))
+                    "privKey()"))
             .append(
-                "</td><td style=\"border-width:1px 0 0 0\">EC Key (P-256)</td>" +
-                "<td rowspan=\"2\" align=\"right\" style=\"border-width:1px 0 1px 0\"><input type=\"checkbox\" name=\"" +
+                "</td><td style=\"border-width:1px 0 1px 0\">Private Key</td>" +
+                "<td style=\"border-width:1px 0 1px 0\">" +
+                "<input type=\"checkbox\" name=\"" +
                 CreateServlet.KEY_INLINING +
-                "\" value=\"false\"></td><td rowspan=\"2\" style=\"border-width:1px 1px 1px 0\">Inlined public key (JWK)&nbsp;</td></tr>" +
-                "<tr><td align=\"center\" style=\"border-width:0 0 1px 1px\">")
-            .append(radioButton(false, 
-                    GenerateSignature.ACTION.RSA,
-                    "rsaKey()"))
-            .append(
-                "</td><td style=\"border-width:0 0 1px 0\">RSA Key (2048)</td></tr>" +
-                "<tr><td align=\"center\" style=\"padding-left:2px\">")
+                "\" value=\"false\"></td>" +
+                "<td style=\"border-width:1px 1px 1px 0\">Inlined public key (JWK)&nbsp;</td></tr>" +
+                "<tr><td align=\"center\" style=\"padding-left:1px\">")
             .append(radioButton(false,
                     GenerateSignature.ACTION.X509,
                     "certPath()"))
             .append(
                 "</td><td colspan=\"3\">X.509 Certificate/Private key</td></tr>" +
-                "<tr><td align=\"center\" style=\"padding-left:2px\"><input type=\"checkbox\" name=\"" +
+                "<tr><td style=\"padding-left:1px\"><input type=\"checkbox\" name=\"" +
                 CreateServlet.JS_FLAG +
                 "\" value=\"true\"></td><td colspan=\"3\">Serialize as JavaScript (but do not verify)</td></tr>" +
                 "</table></div>" +
@@ -130,14 +172,39 @@ public class CreateServlet extends HttpServlet {
             .append(
                 "</form>" +
                 "<div style=\"padding:15pt\">Note: No data is stored on the server, it only passes it!</div>");
-        StringBuilder js = new StringBuilder();
-        createPEMJS(js, JS_SYM_KEY, new StringBuilder(DebugFormatter.getHexString(GenerateSignature.SYMMETRIC_KEY)));
-        createPEMJS(js, JS_EC_KEY, JWSService.clientkey_ec.getPrivateKeyPEM());
-        createPEMJS(js, JS_RSA_KEY, JWSService.clientkey_rsa.getPrivateKeyPEM());
-        createPEMJS(js, JS_CERT_PATH, JWSService.clientkey_rsa.getCertificatePathPEM());
         js.append(
-            "function fill(element, data) {\n" +
-            "  document.getElementById(element).children[1].innerHTML = data;\n" +
+            "function fill(element, keyHolder) {\n" +
+            "  let alg = document.shoot." + RequestServlet.JWS_ALGORITHM + ".value;\n" +
+            "  document.getElementById(element).children[1].innerHTML = keyHolder[alg];\n" +
+            "}\n" +
+            "function optionalFill(element, alg, keyHolder) {\n" +
+            "  let textarea = document.getElementById(element).children[1];\n" +
+            "console.log('txt=' + textarea.innerHTML + '=');\n" +
+            "  if (textarea.innerHTML == '') {\n" +
+            "    textarea.innerHTML = keyHolder[alg];\n" +
+            "  }\n" +
+            "}\n" +
+            "function algChange(alg) {\n" +
+            "console.log('alg=' + alg);\n" +
+            "  if (alg.startsWith('HS')) {\n" +
+            "    document.shoot." + CreateServlet.KEY_TYPE + "[0].checked = true;\n" +
+            "    symKey();\n" +
+            "  } else {\n" +
+            "    document.shoot." + CreateServlet.KEY_TYPE + "[1].checked = true;\n" +
+            "    privKey();\n" +
+            "  }\n" +
+            "}\n" +
+            "function algCheck(symmetric) {\n" +
+            "  let s = document.shoot." + RequestServlet.JWS_ALGORITHM + ";\n" +
+            "  if (s.value.startsWith('HS') != symmetric) {\n" +
+            "    let v = symmetric ? 'HS256' : 'ES256';\n" +
+            "    for (let i = 0; i < s.options.length; i++) {\n" +
+            "      if (s.options[i].text == v) {\n" +
+            "        s.options[i].selected = true;\n" +
+            "        return;\n" +
+            "      }\n" +
+            "    }\n" +
+            "  }\n" +
             "}\n" +
             "function showCert(show) {\n" +
             "  document.getElementById('" + RequestServlet.JWS_CERT_PATH + "').style.display= show ? 'block' : 'none';\n" +
@@ -149,43 +216,42 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + RequestServlet.JWS_SECRET_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
             "function symKey() {\n" +
+            "  algCheck(true);\n" +
             "  showCert(false);\n" +
             "  showPriv(false);\n" +
+            "  fill('" + RequestServlet.JWS_SECRET_KEY + "', symmetricKeys);\n" +
             "  showSym(true);\n" +
-            "  fill('" + RequestServlet.JWS_SECRET_KEY + "', " + JS_SYM_KEY + ");\n" +
             "}\n" +
-            "function ecKey() {\n" +
+            "function privKey() {\n" +
+            "  algCheck(false);\n" +
             "  showCert(false);\n" +
             "  showSym(false);\n" +
-            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_EC_KEY + ");\n" +
-            "  showPriv(true);\n" +
-            "}\n" +
-            "function rsaKey() {\n" +
-            "  showCert(false);\n" +
-            "  showSym(false);\n" +
-            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
+            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', privateKeys);\n" +
             "  showPriv(true);\n" +
             "}\n" +
             "function certPath() {\n" +
+            "  algCheck(false);\n" +
             "  showSym(false);\n" +
-            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', " + JS_RSA_KEY + ");\n" +
-            "  fill('" + RequestServlet.JWS_CERT_PATH + "', " + JS_CERT_PATH + ");\n" +
+            "  fill('" + RequestServlet.JWS_PRIVATE_KEY + "', privateKeys);\n" +
             "  showPriv(true);\n" +
+            "  fill('" + RequestServlet.JWS_CERT_PATH + "', certificates);\n" +
             "  showCert(true);\n" +
-            "}\n");
+            "}\n" +
+            "window.addEventListener('load', function(event) {\n" +
+            "  let alg = document.getElementById('" + RequestServlet.JWS_ALGORITHM  + "').value;\n" +
+            "  console.log('alg=' + alg);\n" +
+            "  if (alg.startsWith('HS')) {\n" +
+            "  } else {\n" +
+            "  console.log('ES/RS=' + alg);\n" +
+            "    optionalFill('" + RequestServlet.JWS_PRIVATE_KEY + "', alg, privateKeys);\n" +
+            "    showPriv(true);\n" +
+            "  }\n" +
+            "});\n");
         HTML.requestPage(response, 
                          js.toString(),
                          html);
     }
     
-    private void createPEMJS(StringBuilder js, String name, StringBuilder pem) {
-        js.append("var ")
-          .append(name)
-          .append(" = '")
-          .append(HTML.javaScript(pem.toString()))
-          .append("';\n");
-    }
-
     private String radioButton(boolean checked, 
                                GenerateSignature.ACTION action,
                                String onClick) {

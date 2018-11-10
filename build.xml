@@ -99,6 +99,16 @@
       </lib>
       <fileset dir="web"/>
       <zipfileset dir="${key.dir}" prefix="${class_war_path}"/>
+      <zipfileset dir="${openkeystore.dir}/testdata/keys" prefix="${class_war_path}">
+        <include name="a*.hex"/>
+        <exclude name="*128*"/>
+        <include name="p256*.pem"/>
+        <include name="p384*.pem"/>
+        <include name="p521*.pem"/>
+        <include name="r2048*.pem"/>
+        <exclude name="*-key.pem"/>
+        <exclude name="*-2*"/>
+      </zipfileset>
       <zipfileset dir="${logotype.dir}" prefix="${class_war_path}"/>
       <zipfileset file="sample-signature.json" prefix="${class_war_path}"/>
     </war>

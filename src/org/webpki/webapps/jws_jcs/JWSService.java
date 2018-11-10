@@ -33,8 +33,12 @@ import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.webpki.crypto.AlgorithmPreferences;
+import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CustomCryptoProvider;
 import org.webpki.crypto.KeyStoreReader;
+import org.webpki.crypto.MACAlgorithms;
+import org.webpki.crypto.SignatureAlgorithms;
 import org.webpki.util.ArrayUtil;
 import org.webpki.util.Base64;
 import org.webpki.webutil.InitPropertyReader;
@@ -50,7 +54,54 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     static String logotype;
     
     static String sampleSignature;
+    
+    static String keyDeclarations;
 
+    class KeyDeclaration {
+        
+        StringBuilder decl = new StringBuilder("var ");
+        StringBuilder after = new StringBuilder();
+        String name;
+        String last;
+        String base;
+        
+        KeyDeclaration(String name, String base) {
+            this.name = name;
+            this.base = base;
+            decl.append(name)
+                .append(" = {");
+        }
+
+        KeyDeclaration addKey(SignatureAlgorithms alg, String fileOrNull) throws IOException {
+            String algId = alg.getAlgorithmId(AlgorithmPreferences.JOSE);
+            if (fileOrNull == null) {
+                after.append(name)
+                     .append('.')
+                     .append(algId)
+                     .append(" = ")
+                     .append(name)
+                     .append('.')
+                     .append(last)
+                     .append(";\n");
+                     
+            } else {
+                if (last != null) {
+                    decl.append(',');
+                }
+                decl.append("\n    ")
+                    .append(algId)
+                    .append(": '")
+                    .append(HTML.javaScript(getEmbeddedResourceString(fileOrNull + base).trim()))
+                    .append('\'');
+                last = algId;
+            }
+            return this;
+        }
+        
+        public String toString() {
+            return decl.append("\n};\n").append(after).toString();
+        }
+    }
     class KeyHolder {
 
         X509Certificate[] certificatePath;
@@ -102,7 +153,7 @@ public class JWSService extends InitPropertyReader implements ServletContextList
                 .append(new Base64().getBase64StringFromBinary(binary))
                 .append("\n-----END ")
                 .append(header)
-                .append("-----\n");
+                .append("-----");
         }
     }
 
@@ -147,6 +198,29 @@ public class JWSService extends InitPropertyReader implements ServletContextList
             String key_password = getPropertyString("key_password");
             clientkey_rsa = new KeyHolder("clientkey_rsa", key_password);
             clientkey_ec = new KeyHolder("clientkey_ec", key_password);
+            
+            
+            
+            keyDeclarations = 
+                    new KeyDeclaration("privateKeys", "privatekey.pem")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
+                    new KeyDeclaration("certificates", "certpath.pem")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
+                    new KeyDeclaration("symmetricKeys", "bitkey.hex")
+                          .addKey(MACAlgorithms.HMAC_SHA256,            "a256")
+                          .addKey(MACAlgorithms.HMAC_SHA384,            "a384")
+                          .addKey(MACAlgorithms.HMAC_SHA512,            "a512").toString();
+            logger.info(keyDeclarations);
 
             logger.info("JWS-JWS Demo Successfully Initiated");
         } catch (Exception e) {
