@@ -39,7 +39,7 @@ public class VerifyServlet extends HttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         request.setCharacterEncoding("UTF-8");
-        String json = CreateServlet.getTextArea(request);
+        String json = CreateServlet.getTextArea(request, "gg");
 
         RequestDispatcher rd = request.getRequestDispatcher("request?"
                 + RequestServlet.JWS_CORE + "="

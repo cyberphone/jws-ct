@@ -19,6 +19,11 @@ package org.webpki.webapps.jws_jcs;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+import java.util.Vector;
+import java.util.logging.Logger;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -28,16 +33,21 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
+import org.webpki.crypto.CertificateUtil;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONParser;
+import org.webpki.util.Base64;
 import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
 
 public class CreateServlet extends HttpServlet {
+    
+    static Logger logger = Logger.getLogger(RequestServlet.class.getName());
+
     private static final long serialVersionUID = 1L;
 
     static final String PRM_JSON_DATA    = "json";
@@ -46,9 +56,9 @@ public class CreateServlet extends HttpServlet {
 
     static final String PRM_SECRET_KEY   = "sec";
 
-    static final String PRM_PRIVATE_KEY  = "priv";
+    static final String PRM_PRIVATE_KEY  = "PEMPRIV";
 
-    static final String PRM_CERT_PATH    = "cert";
+    static final String PRM_CERT_PATH    = "PEMCERT";
 
     static final String PRM_ALGORITHM    = "alg";
     static final String FLG_CERT_PATH    = "cflg";
@@ -139,10 +149,10 @@ public class CreateServlet extends HttpServlet {
                  .add(AsymSignatureAlgorithms.RSA_SHA512)
                  .toString())
             .append(
-                "<div style=\"display:inline-block;padding-left:5pt\">Algorithm</div>" +
-                "<div style=\"display:inline-block;padding-left:5pt\" onclick=\"restoreDefaults()\">Defaults</div></div>")
-            .append(checkBox(FLG_JWK_INLINE, "Inlined public key (JWK)", false, null))
-            .append(checkBox(FLG_CERT_PATH, "Certificate path", false, "certChange(this.checked)"))
+                "<div style=\"display:inline-block;padding:0 10pt 0 5pt\">Algorithm</div>" +
+                "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Defaults</div></div>")
+            .append(checkBox(FLG_JWK_INLINE, "Inlined public key (JWK)", false, "jwkFlagChange(this.checked)"))
+            .append(checkBox(FLG_CERT_PATH, "Certificate path", false, "certFlagChange(this.checked)"))
             .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)", false, null))
             .append(
                 "</div>" +
@@ -201,15 +211,31 @@ public class CreateServlet extends HttpServlet {
             "    showPriv(false);\n" +
             "    disableAndClearCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    disableAndClearCheckBox('" + FLG_JWK_INLINE + "');\n" +
+            "    fill('" + PRM_SECRET_KEY + "', alg, " + 
+                 JWSService.KeyDeclaration.SECRET_KEYS + ", unconditional);\n" +
+            "    showSec(true)\n" +
             "  } else {\n" +
+            "    showSec(false)\n" +
             "    enableCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    enableCheckBox('" + FLG_JWK_INLINE + "');\n" +
+            "    fill('" + PRM_PRIVATE_KEY + "', alg, " + 
+            JWSService.KeyDeclaration.PRIVATE_KEYS + ", unconditional);\n" +
+            "    showPriv(true);\n" +
+            "    fill('" + PRM_CERT_PATH + "', alg, " + 
+            JWSService.KeyDeclaration.CERTIFICATES + ", unconditional);\n" +
+            "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
             "}\n" +
-            "function certChange(flag) {\n" +
+            "function jwkFlagChange(flag) {\n" +
+            "  if (flag) {\n" +
+            "    document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
+            "    showCert(false);\n" +
+            "  }\n" +
+            "}\n" +
+            "function certFlagChange(flag) {\n" +
             "  showCert(flag);\n" +
             "  if (flag) {\n" +
-            "\n" +
+            "    document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
             "  }\n" +
             "}\n" +
             "function restoreDefaults() {\n" +
@@ -221,10 +247,13 @@ public class CreateServlet extends HttpServlet {
             "    }\n" +
             "  }\n" +
             "  setParameters('" + DEFAULT_ALG + "', true);\n" +
+            "  document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
+            "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
+            "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
             "}\n" +
             "function algChange(alg) {\n" +
             "console.log('alg=' + alg);\n" +
-            "  setParameters(alg, false);\n" +
+            "  setParameters(alg, true);\n" +
             "}\n" +
             "function showCert(show) {\n" +
             "  document.getElementById('" + PRM_CERT_PATH + "').style.display= show ? 'block' : 'none';\n" +
@@ -232,7 +261,7 @@ public class CreateServlet extends HttpServlet {
             "function showPriv(show) {\n" +
             "  document.getElementById('" + PRM_PRIVATE_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
-            "function showSym(show) {\n" +
+            "function showSec(show) {\n" +
             "  document.getElementById('" + PRM_SECRET_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
             "window.addEventListener('load', function(event) {\n" +
@@ -245,7 +274,7 @@ public class CreateServlet extends HttpServlet {
                          html);
     }
     
-    public static String getParameter(HttpServletRequest request, String parameter) throws IOException {
+    static String getParameter(HttpServletRequest request, String parameter) throws IOException {
         String string = request.getParameter(parameter);
         if (string == null) {
             throw new IOException("Missing data for: "+ parameter);
@@ -253,9 +282,9 @@ public class CreateServlet extends HttpServlet {
         return string;
     }
 
-    static public String getTextArea(HttpServletRequest request)
+    static String getTextArea(HttpServletRequest request, String name)
             throws IOException {
-        String string = getParameter(request, RequestServlet.JWS_CORE);
+        String string = getParameter(request, name);
         StringBuilder s = new StringBuilder();
         for (char c : string.toCharArray()) {
             if (c != '\r') {
@@ -265,25 +294,78 @@ public class CreateServlet extends HttpServlet {
         return s.toString();
     }
 
+
+    static Vector<byte[]> getPemBlobs(HttpServletRequest request, 
+                                      String name,
+                                      String type) throws IOException {
+        Vector<byte[]> blobs = new Vector<byte[]>();
+        String pemData = getParameter(request, name).trim();
+        do {
+            if (!pemData.startsWith("-----BEGIN " + type + "-----")) {
+                throw new IOException("PEM BEGIN error in: " + name);
+            }
+            int i = pemData.indexOf("-----END " + type + "-----");
+            if (i < 0) {
+                throw new IOException("PEM END error in: " + name);
+            }
+            try {
+                byte[] blob = new Base64().getBinaryFromBase64String(pemData.substring(16 + type.length(), i));
+                blobs.add(blob);
+            } catch (IOException e) {
+                throw new IOException("PEM data error in: " + name + " reason: " + e.getMessage());
+            }
+            pemData = pemData.substring(i + type.length() + 14).trim();
+        } while (pemData.length() != 0);
+        return blobs;
+    }
+    
+    static byte[] getPemBlob(HttpServletRequest request, 
+                             String name,
+                             String type) throws IOException {
+        Vector<byte[]> blobs = getPemBlobs(request, name, type);
+        if (blobs.size() != 1) throw new IOException("Only one element is allowed for: " + type);
+        return blobs.firstElement();
+    }
+    
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         request.setCharacterEncoding("UTF-8");
         try {
-            String json_object = getTextArea(request);
+            String json_object = getTextArea(request, PRM_JSON_DATA);
             JSONObjectReader reader = JSONParser.parse(json_object);
             if (reader.getJSONArrayReader() != null) {
                 throw new IOException("The demo does not support signed arrays");
             }
-            JSONObjectReader additionalHeaderData = JSONParser.parse(getParameter(request, RequestServlet.JWS_ADDITIONAL));
+            JSONObjectReader additionalHeaderData = JSONParser.parse(getParameter(request, PRM_JWS_EXTRA));
             boolean jsFlag = request.getParameter(FLG_JAVASCRIPT) != null;
-            boolean keyInlining = request.getParameter(FLG_JWK_INLINE  ) != null;
-            String algorithm = getParameter(request, RequestServlet.JWS_ALGORITHM);
-            JSONObjectWriter writer = new JSONObjectWriter(reader);
+            boolean keyInlining = request.getParameter(FLG_JWK_INLINE) != null;
+            boolean certOption = request.getParameter(FLG_CERT_PATH) != null;
+            String algorithm = getParameter(request, PRM_ALGORITHM);
             JSONObjectWriter jwsHeader = new JSONObjectWriter();
             jwsHeader.setString(JSONCryptoHelper.ALG_JSON, algorithm);
+            JSONObjectWriter writer = new JSONObjectWriter(reader);
             for (String key : additionalHeaderData.getProperties()) {
                 jwsHeader.copyElement(key, key, additionalHeaderData);
             }
+            PublicKey publicKey = null;
+            PrivateKey privateKey = null;
+            if (algorithm.startsWith("HS")) {
+                
+            } else {
+                byte[] privateKeyBlob = getPemBlob(request, PRM_PRIVATE_KEY, "PRIVATE KEY");
+                if (algorithm.startsWith("RS")) {
+                    
+                } else {
+                    
+                }
+                if (certOption) {
+                    X509Certificate[] certificatePath =
+                        CertificateUtil
+                            .makeCertificatePath(getPemBlobs(request, PRM_CERT_PATH, "CERTIFICATE"));
+                    jwsHeader.setCertificatePath(certificatePath);
+                }
+            }
+            logger.info(jwsHeader.toString());
 /*          
             switch (action) {
                 case SYM:
@@ -329,4 +411,5 @@ public class CreateServlet extends HttpServlet {
             HTML.errorPage(response, e.getMessage());
         }
     }
+
 }
