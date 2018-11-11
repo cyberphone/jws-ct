@@ -20,15 +20,6 @@ li {
   font-family:arial,verdana;
 }
 
-.keytable {
-  border-collapse:collapse;
-}
- 
-.keytable td {
-  border-style:solid;
-  border-color:#a9a9a9;
-  border-width:0px;
-} 
 
 .stdbtn, .multibtn {
   cursor:pointer;
@@ -40,12 +31,33 @@ li {
   padding:3pt 10pt;
 }
 
-.stdbtn, .multibtn {
+.sigparmbox {
+  border-radius:5pt;
+  padding:0 5pt 5pt 5pt;
+}
+
+.sigparmhead {
+  border-radius:3pt;
+  padding:3pt 5pt;
+  z-index:5;
+  position:relative;
+  top:-10pt;
+  margin-bottom:-3pt;
+}
+
+.sigparmbox, .sigparmhead {
+  border-width:1px;
+  border-style:solid;
+  border-color:#a9a9a9;
+  background-color:white;
+}
+
+.stdbtn, .multibtn, .sigparmhead {
   font-family:Arial,'Liberation Sans',Verdana,'Bitstream Vera Sans','DejaVu Sans';
   font-size:10pt;
 }
 
-.stdbtn, .multibtn {
+.stdbtn, .multibtn, .sigparmbox {
   box-shadow:3pt 3pt 3pt #d0d0d0;
 }
 
@@ -63,7 +75,7 @@ li {
 
 @media (max-width:768px) {
 
-  .stdbtn, .multibtn {
+  .stdbtn, .multibtn, .sigparmbox{
     box-shadow:2pt 2pt 2pt #d0d0d0;
   }
 

@@ -18,15 +18,7 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Enumeration;
-import java.util.Vector;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,20 +28,16 @@ import javax.servlet.ServletContextListener;
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CustomCryptoProvider;
-import org.webpki.crypto.KeyStoreReader;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
+
 import org.webpki.util.ArrayUtil;
-import org.webpki.util.Base64;
+
 import org.webpki.webutil.InitPropertyReader;
 
 public class JWSService extends InitPropertyReader implements ServletContextListener {
 
     static Logger logger = Logger.getLogger(JWSService.class.getName());
-
-    static KeyHolder clientkey_rsa;
-
-    static KeyHolder clientkey_ec;
 
     static String logotype;
     
@@ -58,6 +46,10 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     static String keyDeclarations;
 
     class KeyDeclaration {
+        
+        static final String PRIVATE_KEYS = "privateKeys";
+        static final String SECRET_KEYS  = "secretKeys";
+        static final String CERTIFICATES = "certifictes";
         
         StringBuilder decl = new StringBuilder("var ");
         StringBuilder after = new StringBuilder();
@@ -102,60 +94,6 @@ public class JWSService extends InitPropertyReader implements ServletContextList
             return decl.append("\n};\n").append(after).toString();
         }
     }
-    class KeyHolder {
-
-        X509Certificate[] certificatePath;
-        KeyPair keyPair;
-
-        public KeyHolder(String keyName, String key_password) throws KeyStoreException, IOException, GeneralSecurityException {
-            KeyStore ks = KeyStoreReader.loadKeyStore(getResource(getPropertyString(keyName)), key_password);
-            Enumeration<String> aliases = ks.aliases();
-            while (aliases.hasMoreElements()) {
-                String alias = aliases.nextElement();
-                if (ks.isKeyEntry(alias)) {
-                    Vector<X509Certificate> certificates = new Vector<X509Certificate>();
-                    for (Certificate certificate : ks.getCertificateChain(alias)) {
-                        certificates.add((X509Certificate) certificate);
-                    }
-                    certificatePath = certificates.toArray(new X509Certificate[0]);
-                    keyPair = new KeyPair(certificatePath[0].getPublicKey(),
-                            (PrivateKey) ks.getKey(alias, key_password.toCharArray()));
-                    return;
-                }
-            }
-        }
-
-        StringBuilder getPrivateKeyPEM() {
-            return createPEM("PRIVATE KEY", keyPair.getPrivate().getEncoded());
-        }
-
-        StringBuilder getCertificatePathPEM() {
-            StringBuilder collection = new StringBuilder();
-            boolean next = false;
-            for (X509Certificate certificate : certificatePath) {
-                if (next) {
-                    collection.append('\n');
-                }
-                next = true;
-                try {
-                    collection.append(createPEM("CERTIFICATE", certificate.getEncoded()));
-                } catch (GeneralSecurityException e) {
-                    new RuntimeException(e);
-                }
-            }
-            return collection;
-        }
-
-        private StringBuilder createPEM(String header, byte[] binary) {
-            return new StringBuilder("-----BEGIN ")
-                .append(header)
-                .append("-----\n")
-                .append(new Base64().getBase64StringFromBinary(binary))
-                .append("\n-----END ")
-                .append(header)
-                .append("-----");
-        }
-    }
 
     InputStream getResource(String name) throws IOException {
         InputStream is = this.getClass().getResourceAsStream(name);
@@ -195,37 +133,30 @@ public class JWSService extends InitPropertyReader implements ServletContextList
             // //////////////////////////////////////////////////////////////////////////////////////////
             CustomCryptoProvider
                     .forcedLoad(getPropertyBoolean("bouncycastle_first"));
-            String key_password = getPropertyString("key_password");
-            clientkey_rsa = new KeyHolder("clientkey_rsa", key_password);
-            clientkey_ec = new KeyHolder("clientkey_ec", key_password);
-            
-            
             
             keyDeclarations = 
-                    new KeyDeclaration("privateKeys", "privatekey.pem")
+                    new KeyDeclaration(KeyDeclaration.PRIVATE_KEYS, "privatekey.pem")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
                           .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
                           .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
                           .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
-                    new KeyDeclaration("certificates", "certpath.pem")
+                    new KeyDeclaration(KeyDeclaration.CERTIFICATES, "certpath.pem")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
                           .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
                           .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
                           .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
                           .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
-                    new KeyDeclaration("symmetricKeys", "bitkey.hex")
+                    new KeyDeclaration(KeyDeclaration.SECRET_KEYS, "bitkey.hex")
                           .addKey(MACAlgorithms.HMAC_SHA256,            "a256")
                           .addKey(MACAlgorithms.HMAC_SHA384,            "a384")
                           .addKey(MACAlgorithms.HMAC_SHA512,            "a512").toString();
-            logger.info(keyDeclarations);
 
             logger.info("JWS-JWS Demo Successfully Initiated");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "********\n" + e.getMessage()
-                    + "\n********", e);
+            logger.log(Level.SEVERE, "********\n" + e.getMessage() + "\n********", e);
         }
     }
 }

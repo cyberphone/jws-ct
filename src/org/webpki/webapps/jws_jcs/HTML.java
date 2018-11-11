@@ -45,7 +45,7 @@ public class HTML {
         + "  &quot;otherProperties&quot;: [2000, true]\n" + "}";
 
     static final String HTML_INIT = "<!DOCTYPE html>" +
-        "<html><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">" + 
+        "<html lang=\"en\"><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">" + 
         "<meta name=\"viewport\" content=\"initial-scale=1.0\"/>" + 
         "<title>JSON Signature Demo</title>" + 
         "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">";
@@ -99,7 +99,7 @@ public class HTML {
     static String getHTML(String javascript, String box) {
         StringBuilder s = new StringBuilder(HTML_INIT);
         if (javascript != null) {
-            s.append("<script type=\"text/javascript\">").append(javascript)
+            s.append("<script>").append(javascript)
                     .append("</script>");
         }
         s.append("</head><body>" +

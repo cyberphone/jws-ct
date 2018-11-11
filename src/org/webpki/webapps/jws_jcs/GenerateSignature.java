@@ -37,18 +37,6 @@ import org.webpki.util.Base64URL;
  */
 public class GenerateSignature {
 
-    static enum ACTION {
-         SYM  ("HS256"),
-         EC   ("ES256"), 
-         RSA  ("RS256"), 
-         X509 ("RS256");
-         
-         String algorithm;
-         
-         ACTION (String algorithm) {
-             this.algorithm = algorithm;
-         }
-    }
 
     static final String KEY_NAME = "mykey";
 
@@ -62,12 +50,10 @@ public class GenerateSignature {
             (byte) 0x36, (byte) 0x14, (byte) 0x10, (byte) 0x20,
             (byte) 0x74, (byte) 0x34, (byte) 0x69, (byte) 0x09 };
 
-    ACTION action;
     JSONObjectWriter jwsHeader;
     KeyPair keyPair;
 
-    GenerateSignature(ACTION action, JSONObjectWriter jwsHeader, KeyPair keyPair) {
-        this.action = action;
+    GenerateSignature(JSONObjectWriter jwsHeader, KeyPair keyPair) {
         this.jwsHeader = jwsHeader;
         this.keyPair = keyPair;
     }
@@ -98,6 +84,7 @@ public class GenerateSignature {
         String payloadB64 = Base64URL.encode(wr.serializeToBytes(JSONOutputFormats.CANONICALIZED));
         String toBeSigned = jwsHeaderB64 + "." + payloadB64;
         byte[] toBeSignedBin = toBeSigned.getBytes("utf-8");
+/*
         byte[] signatureValue;
         if (action == ACTION.SYM) {
             signatureValue = 
@@ -112,6 +99,7 @@ public class GenerateSignature {
         wr.setString(JSONCryptoHelper.SIGNATURE_JSON,
                      jwsHeaderB64 + ".." + Base64URL.encode(signatureValue));
         System.out.println(jwsHeaderB64 + "." + payloadB64 + "." + Base64URL.encode(signatureValue));
+*/
         return wr.serializeToBytes(JSONOutputFormats.NORMALIZED);
     }
 }
