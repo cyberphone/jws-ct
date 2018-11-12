@@ -118,7 +118,7 @@ public class HTML {
         response.setContentType("text/html; charset=utf-8");
         response.setHeader("Pragma", "No-Cache");
         response.setDateHeader("EXPIRES", 0);
-        response.getOutputStream().write(html.getBytes("UTF-8"));
+        response.getOutputStream().write(html.getBytes("utf-8"));
     }
 
     static String getConditionalParameter(HttpServletRequest request,
@@ -140,9 +140,9 @@ public class HTML {
     }
 
     public static String fancyBox(String id, String content, String header) {
-        return boxHeader(id, header, true)
-            + "<div id=\"" + id + "\" style=\"" + STATIC_BOX + COMMON_BOX
-            + "\">" + content + "</div></div>";
+        return boxHeader(id, header, true) +
+            "<div style=\"" + STATIC_BOX + COMMON_BOX +
+            "\">" + content + "</div></div>";
     }
 
     public static String fancyText(boolean visible,
@@ -201,7 +201,7 @@ public class HTML {
           "\">" +
           "<div class=\"header\">Testing JSON Signatures</div>" +
           fancyText(true,
-                    RequestServlet.JWS_CORE,
+                    RequestServlet.JWS_OBJECT,
                     20, 
                     encode(signature),
                     "Paste a signed JSON object in the text box or try with the default") +
@@ -456,7 +456,7 @@ public class HTML {
         + "//////////////////////////////////////////////////////////////////////////\n"
         + "function verifySignatureOnServer() {\n"
         + "  document.location.href = 'request?"
-        + RequestServlet.JWS_CORE
+        + RequestServlet.JWS_OBJECT
         + "="
         + "' + "
         + "convertToBase64URL(convertToUTF8(JSON.stringify(jsonObject)));\n"

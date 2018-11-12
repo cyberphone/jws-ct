@@ -43,6 +43,8 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     
     static String sampleSignature;
     
+    static String sampleKey;
+    
     static String keyDeclarations;
 
     class KeyDeclaration {
@@ -104,10 +106,7 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     }
     
     String getEmbeddedResourceString(String name) throws IOException {
-        return new String(
-                ArrayUtil
-                .getByteArrayFromInputStream(getResource(name)),
-        "UTF-8");
+        return new String(ArrayUtil.getByteArrayFromInputStream(getResource(name)), "utf-8");
     }
 
     @Override
@@ -127,6 +126,7 @@ public class JWSService extends InitPropertyReader implements ServletContextList
             // Sample signature for verification
             // //////////////////////////////////////////////////////////////////////////////////////////
             sampleSignature = getEmbeddedResourceString("sample-signature.json");
+            sampleKey = getEmbeddedResourceString("p256publickey.pem").trim();
 
             // //////////////////////////////////////////////////////////////////////////////////////////
             // Keys

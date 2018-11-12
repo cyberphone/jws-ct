@@ -26,62 +26,37 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.webpki.json.JSONObjectReader;
-import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
 
-import org.webpki.util.Base64URL;
-
-import org.webpki.webutil.ServletUtil;
-
 public class JavaScriptSignatureServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
 
-    static Logger logger = Logger.getLogger(JavaScriptSignatureServlet.class
-            .getName());
-
-    static void error(HttpServletResponse response, String error_message)
-            throws IOException, ServletException {
-        HTML.errorPage(response, error_message);
-    }
-
-    void showSignature(HttpServletRequest request,
-            HttpServletResponse response, byte[] signed_json)
-            throws IOException, ServletException {
-        JSONObjectReader parsed_json = JSONParser.parse(signed_json);
-        HTML.printResultPage(
-                response,
-                        HTML.fancyBox(
-                                "verify",
-                                new String(
-                                        new JSONObjectWriter(parsed_json)
-                                                .serializeToBytes(JSONOutputFormats.PRETTY_JS_NATIVE),
-                                        "UTF-8").replace("\n", "<br>").replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;"),
-                                "Signed JavaScript Object")
-);
-    }
+    static Logger logger = Logger.getLogger(JavaScriptSignatureServlet.class.getName());
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        byte[] data = null;
-        if (request.getContentType().startsWith(
-                "application/x-www-form-urlencoded")) {
-            data = Base64URL.decode(request.getParameter(RequestServlet.JWS_CORE));
-        } else {
-            if (!request.getContentType().startsWith("application/json")) {
-                error(response, "Request didn't have the proper mime-type: "
-                        + request.getContentType());
-                return;
+        request.setCharacterEncoding("utf-8");
+        if (request.getContentType().startsWith("application/x-www-form-urlencoded")) {
+            try {
+                String htmlSafe = HTML.encode(
+                    JSONParser.parse(CreateServlet.getParameter(request, 
+                                                                RequestServlet.JWS_OBJECT))
+                        .serializeToString(JSONOutputFormats.PRETTY_JS_NATIVE))
+                            .replace("\n", "<br>")
+                            .replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;");
+                HTML.requestPage(response,
+                                 null, 
+                                 new StringBuilder("<div class=\"header\">Signatures in JavaScript Notation</div>")
+                                     .append(HTML.fancyBox("verify",
+                                                           htmlSafe,
+                                                           "JSON object featuring a 'detached' JWS signature element")));
+            } catch (IOException e) {
+                HTML.errorPage(response, e.getMessage());
             }
-            data = ServletUtil.getData(request);
-        }
-        try {
-            showSignature(request, response, data);
-        } catch (IOException e) {
-            HTML.errorPage(response, e.getMessage());
             return;
         }
+        HTML.errorPage(response, "Unexpected MIME type: " + request.getContentType());
     }
-
 }

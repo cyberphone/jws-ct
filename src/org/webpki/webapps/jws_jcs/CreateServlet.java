@@ -17,53 +17,79 @@
 package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
+
+import java.math.BigInteger;
+
+import java.net.URLEncoder;
+
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+
 import java.security.cert.X509Certificate;
+
+import java.security.interfaces.RSAPrivateCrtKey;
+
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+
 import java.util.Vector;
+
 import java.util.logging.Logger;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.webpki.asn1.ASN1Sequence;
+import org.webpki.asn1.DerDecoder;
+import org.webpki.asn1.ParseUtil;
+
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CertificateUtil;
+import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
+import org.webpki.crypto.SignatureWrapper;
+
 import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
+import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
+
 import org.webpki.util.Base64;
 import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
 
 public class CreateServlet extends HttpServlet {
     
-    static Logger logger = Logger.getLogger(RequestServlet.class.getName());
+    static Logger logger = Logger.getLogger(CreateServlet.class.getName());
 
     private static final long serialVersionUID = 1L;
 
+    // HTML form arguments
     static final String PRM_JSON_DATA    = "json";
     
-    static final String PRM_JWS_EXTRA    = "extra";
+    static final String PRM_JWS_EXTRA    = "xtra";
 
     static final String PRM_SECRET_KEY   = "sec";
 
-    static final String PRM_PRIVATE_KEY  = "PEMPRIV";
+    static final String PRM_PRIVATE_KEY  = "priv";
 
-    static final String PRM_CERT_PATH    = "PEMCERT";
+    static final String PRM_CERT_PATH    = "cert";
 
     static final String PRM_ALGORITHM    = "alg";
-    static final String FLG_CERT_PATH    = "cflg";
-    static final String FLG_JAVASCRIPT   = "js";
-    static final String FLG_JWK_INLINE   = "jwk";
+    static final String FLG_CERT_PATH    = "cerflg";
+    static final String FLG_JAVASCRIPT   = "jsflg";
+    static final String FLG_JWK_INLINE   = "jwkflg";
     
     static final String DEFAULT_ALG      = "ES256";
     
@@ -151,8 +177,8 @@ public class CreateServlet extends HttpServlet {
             .append(
                 "<div style=\"display:inline-block;padding:0 10pt 0 5pt\">Algorithm</div>" +
                 "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Defaults</div></div>")
-            .append(checkBox(FLG_JWK_INLINE, "Inlined public key (JWK)", false, "jwkFlagChange(this.checked)"))
-            .append(checkBox(FLG_CERT_PATH, "Certificate path", false, "certFlagChange(this.checked)"))
+            .append(checkBox(FLG_JWK_INLINE, "Automagically insert public key (JWK)", false, "jwkFlagChange(this.checked)"))
+            .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", false, "certFlagChange(this.checked)"))
             .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)", false, null))
             .append(
                 "</div>" +
@@ -166,8 +192,7 @@ public class CreateServlet extends HttpServlet {
                 HTML.fancyText(true,
                           PRM_JWS_EXTRA,
                           4,
-                          "{\n" +
-                          "}",
+                          "",
                           "Additional JWS header parameters (here expressed as properties of a JSON object)"))
             .append(
                 HTML.fancyText(false,
@@ -180,7 +205,7 @@ public class CreateServlet extends HttpServlet {
                           PRM_PRIVATE_KEY,
                           4,
                           "",
-                          "Private key in PEM/PKCS #8 format"))
+                          "Private key in PEM/PKCS #8 or &quot;plain&quot; JWK format"))
             .append(
                 HTML.fancyText(false,
                           PRM_CERT_PATH,
@@ -193,8 +218,8 @@ public class CreateServlet extends HttpServlet {
         js.append(
             "function fill(element, alg, keyHolder, unconditional) {\n" +
             "  let textarea = document.getElementById(element).children[1];\n" +
-            "  if (unconditional || textarea.innerHTML == '') {\n" +
-            "    textarea.innerHTML = keyHolder[alg];\n" +
+            "  if (unconditional || textarea.value == '') {\n" +
+            "    textarea.value = keyHolder[alg];\n" +
             "  }\n" +
             "}\n" +
             "function disableAndClearCheckBox(id) {\n" +
@@ -225,6 +250,7 @@ public class CreateServlet extends HttpServlet {
             JWSService.KeyDeclaration.CERTIFICATES + ", unconditional);\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
+            "  document.getElementById('" + PRM_JWS_EXTRA + "').children[1].value = '{\\n}';\n" +
             "}\n" +
             "function jwkFlagChange(flag) {\n" +
             "  if (flag) {\n" +
@@ -279,7 +305,7 @@ public class CreateServlet extends HttpServlet {
         if (string == null) {
             throw new IOException("Missing data for: "+ parameter);
         }
-        return string;
+        return string.trim();
     }
 
     static String getTextArea(HttpServletRequest request, String name)
@@ -295,44 +321,67 @@ public class CreateServlet extends HttpServlet {
     }
 
 
-    static Vector<byte[]> getPemBlobs(HttpServletRequest request, 
-                                      String name,
+    static Vector<byte[]> getPemBlobs(String pemData,
                                       String type) throws IOException {
         Vector<byte[]> blobs = new Vector<byte[]>();
-        String pemData = getParameter(request, name).trim();
         do {
             if (!pemData.startsWith("-----BEGIN " + type + "-----")) {
-                throw new IOException("PEM BEGIN error in: " + name);
+                if (pemData.startsWith("-----BEGIN RSA")) {
+                    throw new IOException("Private keys must be in PEM over PKCS #8");
+                }
+                throw new IOException("PEM BEGIN error in: " + type);
             }
             int i = pemData.indexOf("-----END " + type + "-----");
             if (i < 0) {
-                throw new IOException("PEM END error in: " + name);
+                throw new IOException("PEM END error in: " + type);
             }
             try {
                 byte[] blob = new Base64().getBinaryFromBase64String(pemData.substring(16 + type.length(), i));
                 blobs.add(blob);
             } catch (IOException e) {
-                throw new IOException("PEM data error in: " + name + " reason: " + e.getMessage());
+                throw new IOException("PEM data error in: " + type + " reason: " + e.getMessage());
             }
             pemData = pemData.substring(i + type.length() + 14).trim();
         } while (pemData.length() != 0);
         return blobs;
     }
     
-    static byte[] getPemBlob(HttpServletRequest request, 
-                             String name,
+    static byte[] getPemBlob(String pemData,
                              String type) throws IOException {
-        Vector<byte[]> blobs = getPemBlobs(request, name, type);
+        Vector<byte[]> blobs = getPemBlobs(pemData, type);
         if (blobs.size() != 1) throw new IOException("Only one element is allowed for: " + type);
         return blobs.firstElement();
     }
     
+
+    PublicKey ecPublicKeyFromPKCS8(byte[] privateKeyBlob) throws IOException, GeneralSecurityException {
+        ASN1Sequence seq = ParseUtil.sequence(DerDecoder.decode(privateKeyBlob), 3);
+        String oid = ParseUtil.oid(ParseUtil.sequence(seq.get(1), 2).get(1)).oid();
+        seq = ParseUtil.sequence(DerDecoder.decode(ParseUtil.octet(seq.get(2))));
+        byte[] publicKey = ParseUtil.bitstring(ParseUtil.singleContext(seq.get(seq.size() -1), 1));
+        int length = (publicKey.length - 1) / 2;
+        byte[] parm = new byte[length];
+        System.arraycopy(publicKey, 1, parm, 0, length);
+        BigInteger x = new BigInteger(1, parm);
+        System.arraycopy(publicKey, 1 + length, parm, 0, length);
+        BigInteger y = new BigInteger(1, parm);
+        for (KeyAlgorithms ka : KeyAlgorithms.values()) {
+            if (oid.equals(ka.getECDomainOID())) {
+                if (oid.equals(ka.getECDomainOID())) {
+                    ECPoint w = new ECPoint(x, y);
+                    return KeyFactory.getInstance("EC").generatePublic(new ECPublicKeySpec(w, ka.getECParameterSpec()));
+                }
+            }
+        }
+        throw new IOException("Failed creating EC public key from private key");
+    }
+    
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        request.setCharacterEncoding("UTF-8");
-        try {
-            String json_object = getTextArea(request, PRM_JSON_DATA);
-            JSONObjectReader reader = JSONParser.parse(json_object);
+         try {
+            request.setCharacterEncoding("utf-8");
+            String jsonData = getTextArea(request, PRM_JSON_DATA);
+            JSONObjectReader reader = JSONParser.parse(jsonData);
             if (reader.getJSONArrayReader() != null) {
                 throw new IOException("The demo does not support signed arrays");
             }
@@ -342,74 +391,111 @@ public class CreateServlet extends HttpServlet {
             boolean certOption = request.getParameter(FLG_CERT_PATH) != null;
             String algorithm = getParameter(request, PRM_ALGORITHM);
             JSONObjectWriter jwsHeader = new JSONObjectWriter();
+
+            // Create the minimal JWS header
             jwsHeader.setString(JSONCryptoHelper.ALG_JSON, algorithm);
-            JSONObjectWriter writer = new JSONObjectWriter(reader);
+
+            // Add any optional (by the user specified) arguments
             for (String key : additionalHeaderData.getProperties()) {
                 jwsHeader.copyElement(key, key, additionalHeaderData);
             }
-            PublicKey publicKey = null;
+            
+            // Get the signature key
             PrivateKey privateKey = null;
+            byte[] secretKey = null;
+            String validationKey;
+            
+            // Symmetric or asymmetric?
             if (algorithm.startsWith("HS")) {
-                
+                validationKey = getParameter(request, PRM_SECRET_KEY);
+                secretKey = DebugFormatter.getByteArrayFromHex(validationKey);
             } else {
-                byte[] privateKeyBlob = getPemBlob(request, PRM_PRIVATE_KEY, "PRIVATE KEY");
-                if (algorithm.startsWith("RS")) {
-                    
+                // To simplify UI we require PKCS #8 with the public key embedded
+                // but we also support JWK which also has the public key
+                PublicKey publicKey;
+                String privateKeyString = getParameter(request, PRM_PRIVATE_KEY);
+                if (privateKeyString.startsWith("{")) {
+                    KeyPair keyPair = JSONParser.parse(privateKeyString).getKeyPair();
+                    publicKey = keyPair.getPublic();
+                    privateKey = keyPair.getPrivate();
                 } else {
-                    
+                    byte[] privateKeyBlob = getPemBlob(privateKeyString, "PRIVATE KEY");
+                    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBlob);
+                    if (algorithm.startsWith("ES")) {
+                        privateKey = KeyFactory.getInstance("EC").generatePrivate(keySpec);
+                        publicKey = ecPublicKeyFromPKCS8(privateKeyBlob);
+                    } else {
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                        privateKey = keyFactory.generatePrivate(keySpec);
+                        RSAPrivateCrtKey privk = (RSAPrivateCrtKey)privateKey;
+                        RSAPublicKeySpec publicKeySpec = 
+                                new RSAPublicKeySpec(privk.getModulus(), privk.getPublicExponent());
+                        publicKey = keyFactory.generatePublic(publicKeySpec);
+                    }
                 }
+                validationKey = "-----BEGIN PUBLIC KEY-----\n" +
+                                new Base64().getBase64StringFromBinary(publicKey.getEncoded()) +
+                                "\n-----END PUBLIC KEY-----";
+
+                // Add other JWS header data that the demo program fixes 
                 if (certOption) {
                     X509Certificate[] certificatePath =
                         CertificateUtil
-                            .makeCertificatePath(getPemBlobs(request, PRM_CERT_PATH, "CERTIFICATE"));
+                            .makeCertificatePath(getPemBlobs(getParameter(request, PRM_CERT_PATH),
+                                                             "CERTIFICATE"));
                     jwsHeader.setCertificatePath(certificatePath);
+                } else if (keyInlining) {
+                    jwsHeader.setPublicKey(publicKey);
                 }
-            }
-            logger.info(jwsHeader.toString());
-/*          
-            switch (action) {
-                case SYM:
-                    byte[] secretKey = 
-                        DebugFormatter.getByteArrayFromHex(getParameter(request,
-                                                                        RequestServlet.JWS_SECRET_KEY));
-                    MACAlgorithms symAlg = MACAlgorithms.getAlgorithmFromId(algorithm, 
-                                                                            AlgorithmPreferences.JOSE);
-                    break;
-                default:
-                    throw new IOException("Not impl");
             }
 
-            KeyPair keyPair = null;
-            if (action == RadioButton.SYM) {
-            } else if (action == RadioButton.CERT) {
-                jwsHeader.setCertificatePath(JWSService.clientkey_rsa.certificatePath);
-                keyPair = JWSService.clientkey_rsa.keyPair;
-            } else {
-                keyPair = (action == RadioButton.PRIV ? JWSService.clientkey_rsa : JWSService.clientkey_ec).keyPair;
-                if (keyInlining) {
-                    jwsHeader.setPublicKey(keyPair.getPublic());
-                }
-            }
-            String signed_json = new String(new GenerateSignature(jwsHeader, keyPair)
-                    .sign(writer), "utf-8");
-            int i = signed_json.lastIndexOf("\"sig");
-            if (signed_json.charAt(i - 1) == ',') {
+            // Creating JWS data to be signed
+            String jwsHeaderB64 = Base64URL.encode(jwsHeader.serializeToBytes(JSONOutputFormats.NORMALIZED));
+            String payloadB64 = Base64URL.encode(reader.serializeToBytes(JSONOutputFormats.CANONICALIZED));
+            byte[] dataToBeSigned = (jwsHeaderB64 + "." + payloadB64).getBytes("utf-8");
+
+            // Sign it using the provided algorithm and key
+            String signatureB64 = Base64URL.encode(secretKey == null ?
+                new SignatureWrapper(
+                    AsymSignatureAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE),
+                    privateKey)
+                        .update(dataToBeSigned).sign()
+                                                                     :
+                MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
+                        .digest(secretKey, dataToBeSigned));
+
+            // Create the completed object
+            String signedJsonObject = new JSONObjectWriter(reader)
+                .setString(JSONCryptoHelper.SIGNATURE_JSON,
+                           jwsHeaderB64 + ".." + signatureB64)
+                .serializeToString(JSONOutputFormats.NORMALIZED);
+
+            // How things should appear in a "regular" JWS
+            logger.info(jwsHeaderB64 + '.' + payloadB64 + '.' + signatureB64);
+
+            // The following is just for the demo.  That is, we want to preserve
+            // the original ("untouched") JSON data for educational purposes.
+            int i = signedJsonObject.lastIndexOf("\"sig");
+            if (signedJsonObject.charAt(i - 1) == ',') {
                 i--;
             }
-            int j = json_object.lastIndexOf("}");
-            signed_json = json_object.substring(0, j) + 
-                    signed_json.substring(i, signed_json.length() - 1) +
-                    json_object.substring(j);
-            RequestDispatcher rd = request
-                    .getRequestDispatcher((jsFlag ? "jssignature?" : "request?")
-                            + RequestServlet.JWS_CORE
-                            + "="
-                            + Base64URL.encode(signed_json.getBytes("utf-8")));
-            rd.forward(request, response);
-            */
+            int j = jsonData.lastIndexOf("}");
+            signedJsonObject = jsonData.substring(0, j) + 
+                    signedJsonObject.substring(i, signedJsonObject.length() - 1) +
+                    jsonData.substring(j);
+
+            // We terminate by verifying the signature as well
+            request.getRequestDispatcher((jsFlag ? "jssignature?" : "request?") +
+                RequestServlet.JWS_OBJECT + 
+                "=" +
+                URLEncoder.encode(signedJsonObject, "utf-8") +
+                "&" +
+                RequestServlet.JWS_VALIDATION_KEY + 
+                "=" +
+                URLEncoder.encode(validationKey, "utf-8"))
+                    .forward(request, response);
         } catch (Exception e) {
             HTML.errorPage(response, e.getMessage());
         }
     }
-
 }

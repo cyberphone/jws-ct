@@ -1,7 +1,7 @@
 {
-  "description": "Signed JSON object using 'Detached' JWS and Canonicalization",
+  "description": "Signed JSON object using 'Detached' JWS and JCS Canonicalization",
   "string": "\u20ac$\u000F\u000aA'\u0042\u0022\u005c\\\"\/",
   "numbers": [333333333.33333329, 1E30, 4.50, 2e-3, 0.000000000000000000000000001],
   "literals": [null, true, false],
-  "signature": "eyJhbGciOiJIUzI1NiIsImtpZCI6Im15a2V5In0..8KkQMSIEqI93NZBxZ0cyo9XTjaonpLPFWvkQQi1kMEo"
+  "signature": "eyJhbGciOiJFUzI1NiJ9..fldaG7VNXwypDX8RjCIYzNgqm7LasVhZLIIr4WsLofSfhBLE7XNHIUdUpxKklDxNrufe3-nMm3ufAj_EnviEWA"
 }
