@@ -216,11 +216,8 @@ public class CreateServlet extends HttpServlet {
                 "</form>" +
                 "<div style=\"padding:15pt\">Note: No data is stored on the server, it only passes it!</div>");
         js.append(
-            "function fill(element, alg, keyHolder, unconditional) {\n" +
-            "  let textarea = document.getElementById(element).children[1];\n" +
-            "  if (unconditional || textarea.value == '') {\n" +
-            "    textarea.value = keyHolder[alg];\n" +
-            "  }\n" +
+            "function fill(element, alg, keyHolder) {\n" +
+            "  document.getElementById(element).children[1].value = keyHolder[alg];\n" +
             "}\n" +
             "function disableAndClearCheckBox(id) {\n" +
             "  let checkBox = document.getElementById(id);\n" +
@@ -230,24 +227,24 @@ public class CreateServlet extends HttpServlet {
             "function enableCheckBox(id) {\n" +
             "  document.getElementById(id).disabled = false;\n" +
             "}\n" +
-            "function setParameters(alg, unconditional) {\n" +
+            "function setParameters(alg) {\n" +
             "  if (alg.startsWith('HS')) {\n" +
             "    showCert(false);\n" +
             "    showPriv(false);\n" +
             "    disableAndClearCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    disableAndClearCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_SECRET_KEY + "', alg, " + 
-                 JWSService.KeyDeclaration.SECRET_KEYS + ", unconditional);\n" +
+                 JWSService.KeyDeclaration.SECRET_KEYS + ");\n" +
             "    showSec(true)\n" +
             "  } else {\n" +
             "    showSec(false)\n" +
             "    enableCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    enableCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_PRIVATE_KEY + "', alg, " + 
-            JWSService.KeyDeclaration.PRIVATE_KEYS + ", unconditional);\n" +
+            JWSService.KeyDeclaration.PRIVATE_KEYS + ");\n" +
             "    showPriv(true);\n" +
             "    fill('" + PRM_CERT_PATH + "', alg, " + 
-            JWSService.KeyDeclaration.CERTIFICATES + ", unconditional);\n" +
+            JWSService.KeyDeclaration.CERTIFICATES + ");\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
             "  document.getElementById('" + PRM_JWS_EXTRA + "').children[1].value = '{\\n}';\n" +
@@ -272,14 +269,14 @@ public class CreateServlet extends HttpServlet {
             "      break;\n" +
             "    }\n" +
             "  }\n" +
-            "  setParameters('" + DEFAULT_ALG + "', true);\n" +
+            "  setParameters('" + DEFAULT_ALG + "');\n" +
             "  document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
             "}\n" +
             "function algChange(alg) {\n" +
             "console.log('alg=' + alg);\n" +
-            "  setParameters(alg, true);\n" +
+            "  setParameters(alg);\n" +
             "}\n" +
             "function showCert(show) {\n" +
             "  document.getElementById('" + PRM_CERT_PATH + "').style.display= show ? 'block' : 'none';\n" +
@@ -291,10 +288,8 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + PRM_SECRET_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
             "window.addEventListener('load', function(event) {\n" +
-            "  let alg = document.getElementById('" + PRM_ALGORITHM  + "').value;\n" +
-            "  console.log('alg=' + alg);\n" +
-            "  setParameters(alg, false);\n" +
-            "});\n");
+            "  setParameters(document.getElementById('" + PRM_ALGORITHM  + "').value);\n" +
+             "});\n");
         HTML.requestPage(response, 
                          js.toString(),
                          html);
@@ -326,8 +321,8 @@ public class CreateServlet extends HttpServlet {
         Vector<byte[]> blobs = new Vector<byte[]>();
         do {
             if (!pemData.startsWith("-----BEGIN " + type + "-----")) {
-                if (pemData.startsWith("-----BEGIN RSA")) {
-                    throw new IOException("Private keys must be in PEM over PKCS #8");
+                if (pemData.startsWith("-----BEGIN RSA") || pemData.startsWith("-----BEGIN EC")) {
+                    throw new IOException("This application only supports PEM formatted private keys compliant with PKCS #8 (consult OpenSSL)");
                 }
                 throw new IOException("PEM BEGIN error in: " + type);
             }
@@ -336,10 +331,12 @@ public class CreateServlet extends HttpServlet {
                 throw new IOException("PEM END error in: " + type);
             }
             try {
-                byte[] blob = new Base64().getBinaryFromBase64String(pemData.substring(16 + type.length(), i));
+                byte[] blob = new Base64()
+                    .getBinaryFromBase64String(pemData.substring(16 + type.length(), i));
                 blobs.add(blob);
             } catch (IOException e) {
-                throw new IOException("PEM data error in: " + type + " reason: " + e.getMessage());
+                throw new IOException("PEM data error in: " + type + 
+                                      " reason: " + e.getMessage());
             }
             pemData = pemData.substring(i + type.length() + 14).trim();
         } while (pemData.length() != 0);
@@ -433,6 +430,7 @@ public class CreateServlet extends HttpServlet {
                         publicKey = keyFactory.generatePublic(publicKeySpec);
                     }
                 }
+                privateKeyString = null;  // Nullify it after use
                 validationKey = "-----BEGIN PUBLIC KEY-----\n" +
                                 new Base64().getBase64StringFromBinary(publicKey.getEncoded()) +
                                 "\n-----END PUBLIC KEY-----";
@@ -463,6 +461,7 @@ public class CreateServlet extends HttpServlet {
                                                                      :
                 MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
                         .digest(secretKey, dataToBeSigned));
+            privateKey = null;  // Nullify it after use
 
             // Create the completed object
             String signedJsonObject = new JSONObjectWriter(reader)

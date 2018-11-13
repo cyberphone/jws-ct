@@ -51,7 +51,11 @@ public class JavaScriptSignatureServlet extends HttpServlet {
                                  new StringBuilder("<div class=\"header\">Signatures in JavaScript Notation</div>")
                                      .append(HTML.fancyBox("verify",
                                                            htmlSafe,
-                                                           "JSON object featuring a 'detached' JWS signature element")));
+                                                           "JSON object featuring a 'detached' JWS signature element"))
+                                     .append("<div style=\"padding:20pt 10pt\">Note that the signature above is not verified.  The only difference between " +
+                                             "the JavaScript notation and &quot;true&quot; JSON is the removal of the (usually redundant) quote characters " +
+                                             "around property names.  Names that interfere with JavaScript naming " +
+                                             "conventions for variables like '5' or 'my.prop' will though be quoted.</div>"));
             } catch (IOException e) {
                 HTML.errorPage(response, e.getMessage());
             }

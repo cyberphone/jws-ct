@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
+import org.webpki.crypto.CertificateInfo;
 import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureWrapper;
@@ -71,7 +72,7 @@ public class RequestServlet extends HttpServlet {
             // Parse the JSON data
             JSONObjectReader parsedObject = JSONParser.parse(signedJsonObject);
             
-            // Create a pretty printed JSON object without canonicalization
+            // Create a pretty-printed JSON object without canonicalization
             String prettySignature = parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
             Vector<String> tokens = new JSONTokenExtractor().getTokens(signedJsonObject);
             int fromIndex = 0;
@@ -91,6 +92,7 @@ public class RequestServlet extends HttpServlet {
             // Get the actual JSON data bytes and remove the signature
             byte[] jsonData = parsedObject.removeProperty(JSONCryptoHelper.SIGNATURE_JSON)
                     .serializeToBytes(JSONOutputFormats.CANONICALIZED);
+            String jsonDataB64 = Base64URL.encode(jsonData);
 
             // Extract the JWS header
             int endOfHeader = jwsString.indexOf('.');
@@ -104,7 +106,7 @@ public class RequestServlet extends HttpServlet {
             // Parse it after the sanity test
             String jwsHeaderB64 = jwsString.substring(0, endOfHeader);
             JSONObjectReader jwsHeader = JSONParser.parse(Base64URL.decode(jwsHeaderB64));
-            byte[] signedData = (jwsHeaderB64 + "." + Base64URL.encode(jsonData)).getBytes("utf-8");
+            byte[] signedData = (jwsHeaderB64 + "." + jsonDataB64).getBytes("utf-8");
             
             // Get the other component, the signature
             byte[] signature = Base64URL.decode(jwsString.substring(startOfSignature + 1));
@@ -115,23 +117,34 @@ public class RequestServlet extends HttpServlet {
             // We don't bother about any other header data than possible public key
             // elements modulo JKU and X5U
             boolean macFlag = algorithm.startsWith("HS");
-            PublicKey publicKey = null;
+            PublicKey jwsSuppliedPublicKey = null;
             X509Certificate[] certificatePath = null;
             if (jwsHeader.hasProperty(JSONCryptoHelper.JWK_JSON)) {
-                publicKey = jwsHeader.getPublicKey();
+                jwsSuppliedPublicKey = jwsHeader.getPublicKey();
             }
+            StringBuilder certificateData = null;
             if (jwsHeader.hasProperty(JSONCryptoHelper.X5C_JSON)) {
-                if (publicKey != null) {
+                if (jwsSuppliedPublicKey != null) {
                     throw new IOException("Both X5C and JWK?");
                 }
                 certificatePath = jwsHeader.getCertificatePath();
-                publicKey = certificatePath[0].getPublicKey();
+                jwsSuppliedPublicKey = certificatePath[0].getPublicKey();
+                for (X509Certificate certificate : certificatePath) {
+                    if (certificateData == null) {
+                        certificateData = new StringBuilder();
+                    } else {
+                        certificateData.append("<br>&nbsp;<br>");
+                    }
+                    certificateData.append(
+                        HTML.encode(new CertificateInfo(certificate).toString())
+                            .replace("\n", "<br>").replace("  ", ""));
+                }
             }
             
-            // Recreate the validation key and validate signature
+            // Recreate the validation key and validate the signature
             boolean jwkValidationKey = validationKey.startsWith("{");
             if (macFlag) {
-                if (publicKey != null) {
+                if (jwsSuppliedPublicKey != null) {
                     throw new IOException("Public key header elements in a MAC signature?");
                 }
                 if (!ArrayUtil.compare(MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
@@ -139,29 +152,32 @@ public class RequestServlet extends HttpServlet {
                     throw new IOException("HMAC signature validation error");
                 }
             } else {
-                PublicKey providedKey =  jwkValidationKey ? 
+                PublicKey externalPublicKey =  jwkValidationKey ? 
                     JSONParser.parse(validationKey).getCorePublicKey(AlgorithmPreferences.JOSE)
-                                                          :
+                                                                :
                     KeyFactory.getInstance(algorithm.startsWith("ES") ? "EC" : "RSA")
                         .generatePublic(new X509EncodedKeySpec(CreateServlet.getPemBlob(validationKey,
                                                                                         "PUBLIC KEY")));
                 AsymSignatureAlgorithms signatureAlgorithm = 
                         AsymSignatureAlgorithms.getAlgorithmFromId(algorithm,
                                                                    AlgorithmPreferences.JOSE);
-                if (providedKey instanceof ECPublicKey && 
-                    KeyAlgorithms.getKeyAlgorithm(providedKey)
+                if (externalPublicKey instanceof ECPublicKey && 
+                    KeyAlgorithms.getKeyAlgorithm(externalPublicKey)
                         .getRecommendedSignatureAlgorithm() != signatureAlgorithm) {
                     throw new IOException("EC key and algorithm does not match the JWS spec");
                 }
-                if (!new SignatureWrapper(signatureAlgorithm, providedKey)
+                if (!new SignatureWrapper(signatureAlgorithm, externalPublicKey)
                             .update(signedData)
                             .verify(signature)) {
                     throw new IOException("Asymmetric key signature validation error");
                 }
+                if (jwsSuppliedPublicKey != null && !jwsSuppliedPublicKey.equals(externalPublicKey)) {
+                    throw new IOException("Supplied public key differs from the one derived from the JWS header");
+                }
             }
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
-                .append(HTML.fancyBox("signed", prettySignature, "Signed JSON object"))           
+                .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
                 .append(HTML.fancyBox("algo", 
                                       jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
                                       "Decoded JWS header"))
@@ -175,11 +191,19 @@ public class RequestServlet extends HttpServlet {
                                               : "Public validation key"))
                 .append(HTML.fancyBox("canonicalized", 
                                       HTML.encode(new String(jsonData, "utf-8")),
-                                      "Canonicalized JSON Data (with possible line breaks " +
+                                      "Canonicalized version of the JSON data (with possible line breaks " +
                                       "for display purposes only)"));
+            if (certificateData != null) {
+                html.append(HTML.fancyBox("certpath", 
+                                          certificateData.toString(),
+                                          "Core certificate data"));
+            }
+            html.append(HTML.fancyBox("original", 
+                                      jwsHeaderB64 + '.' + jsonDataB64 + jwsString.substring(startOfSignature),
+                                      "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
-            HTML.requestPage(response, null, html);
+            HTML.requestPage(response, null, html.append("<div>&nbsp;</div>"));
         } catch (Exception e) {
             HTML.errorPage(response, e.getMessage());
         }

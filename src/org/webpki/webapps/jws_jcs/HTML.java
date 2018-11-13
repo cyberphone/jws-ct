@@ -29,16 +29,6 @@ import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.json.JSONCryptoHelper;
 
 public class HTML {
-    static final String SIGNUP_BGND_COLOR = "#F4FFF1";
-    static final String SIGNUP_EDIT_COLOR = "#FFFA91";
-    static final String SIGNUP_BAD_COLOR = "#F78181";
-    static final String BOX_SHADDOW = "box-shadow:5px 5px 5px #C0C0C0";
-    static final String KG2_DEVID_BASE = "Field";
-
-    static final String STATIC_BOX = "background:#F8F8F8;";
-    static final String COMMON_BOX = "box-sizing:border-box;width:100%;word-break:break-all;border-width:1px;border-style:solid;border-color:grey;padding:10pt;box-shadow:3pt 3pt 3pt #D0D0D0";
-
-    static final String TEXT_BOX = "background:#FFFFD0;";
 
     static final String SAMPLE_DATA = "{\n"
         + "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n"
@@ -141,8 +131,7 @@ public class HTML {
 
     public static String fancyBox(String id, String content, String header) {
         return boxHeader(id, header, true) +
-            "<div style=\"" + STATIC_BOX + COMMON_BOX +
-            "\">" + content + "</div></div>";
+            "<div class=\"staticbox\">" + content + "</div></div>";
     }
 
     public static String fancyText(boolean visible,
@@ -153,8 +142,7 @@ public class HTML {
         return boxHeader(id, header, visible) +
             "<textarea" +
             " rows=\"" + rows + "\" maxlength=\"100000\"" +
-            " style=\"" + TEXT_BOX + COMMON_BOX +
-            "\" name=\"" + id + "\">" + 
+            " class=\"textbox\" name=\"" + id + "\">" + 
             content +
             "</textarea></div>";
     }
