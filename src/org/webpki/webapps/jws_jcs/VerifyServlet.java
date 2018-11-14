@@ -36,7 +36,7 @@ public class VerifyServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
 
-        HTML.requestPage(response, null, new StringBuilder(
+        HTML.standardPage(response, null, new StringBuilder(
                 "<form name=\"shoot\" method=\"POST\" action=\"verify\">" +
                 "<div class=\"header\">Testing JSON Signatures</div>")
             .append(HTML.fancyText(true,

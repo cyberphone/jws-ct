@@ -14,7 +14,6 @@
   <property name="keypassword" value="foo123"/>
   <property name="keyfilext" value=".p12"/>
   <property name="key.dir" location="${openkeystore.dir}/json/keys"/>
-  <property name="logotype.dir" location="${openkeystore.dir}/json/logotype"/>
   <property name="webpki.lib.dir" location="${openkeystore.dir}/library/dist"/>
   <property name="third.party.lib.dir" location="${openkeystore.dir}/resources/third-party-jars"/>
   
@@ -27,12 +26,6 @@
 
   <property environment="env"/>
   <property name="catalina.home" value="${env.CATALINA_HOME}"/>
-
-  <condition property="storetype" value="PKCS12" else="JKS">
-    <matches pattern=".*\.p12$" string="${keyfilext}"/>
-  </condition>
-
-    <echo message="${third.party.lib.dir}"/>
 
   <target name="help">
       <echo message="build tomcat zip-distribution createcerts"/>
@@ -82,9 +75,6 @@
     <property name="bouncycastle.first" value="true"/>
     <replace file="${temp.dir}/web.xml">
       <replacefilter token="@bouncycastle-first@" value="${bouncycastle.first}"/>
-      <replacefilter token="@key-password@" value="${keypassword}"/>
-      <replacefilter token="@clientkey-rsa@" value="${clientkey_rsa}${keyfilext}"/>
-      <replacefilter token="@clientkey-ec@" value="${clientkey_ec}${keyfilext}"/>
     </replace>
     <war destfile="${dist.dir}/${application}" webxml="${temp.dir}/web.xml">
       <classes dir="${temp.dir}">
@@ -109,7 +99,6 @@
         <exclude name="*-key.pem"/>
         <exclude name="*-2*"/>
       </zipfileset>
-      <zipfileset dir="${logotype.dir}" prefix="${class_war_path}"/>
       <zipfileset file="sample-signature.json" prefix="${class_war_path}"/>
     </war>
   </target>

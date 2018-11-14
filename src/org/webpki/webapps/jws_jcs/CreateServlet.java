@@ -290,7 +290,7 @@ public class CreateServlet extends HttpServlet {
             "window.addEventListener('load', function(event) {\n" +
             "  setParameters(document.getElementById('" + PRM_ALGORITHM  + "').value);\n" +
              "});\n");
-        HTML.requestPage(response, 
+        HTML.standardPage(response, 
                          js.toString(),
                          html);
     }

@@ -17,15 +17,22 @@
 package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
+
 import java.security.KeyFactory;
 import java.security.PublicKey;
+
 import java.security.cert.X509Certificate;
+
 import java.security.interfaces.ECPublicKey;
+
 import java.security.spec.X509EncodedKeySpec;
+
 import java.util.Vector;
+
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,10 +43,12 @@ import org.webpki.crypto.CertificateInfo;
 import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureWrapper;
+
 import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
+
 import org.webpki.util.ArrayUtil;
 import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
@@ -145,7 +154,7 @@ public class RequestServlet extends HttpServlet {
             boolean jwkValidationKey = validationKey.startsWith("{");
             if (macFlag) {
                 if (jwsSuppliedPublicKey != null) {
-                    throw new IOException("Public key header elements in a MAC signature?");
+                    throw new IOException("Public key header elements in a HMAC signature?");
                 }
                 if (!ArrayUtil.compare(MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
                         .digest(DebugFormatter.getByteArrayFromHex(validationKey), signedData), signature)) {
@@ -203,7 +212,7 @@ public class RequestServlet extends HttpServlet {
                                       "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
-            HTML.requestPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
+            HTML.standardPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
         } catch (Exception e) {
             HTML.errorPage(response, e.getMessage());
         }

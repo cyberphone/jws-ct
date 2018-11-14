@@ -10,24 +10,6 @@
         <param-value>@bouncycastle-first@</param-value>
     </context-param>
 
-    <context-param>
-        <description>Key Password</description>
-        <param-name>key_password</param-name>
-        <param-value>@key-password@</param-value>
-    </context-param>
- 
-    <context-param>
-        <description>Client RSA Certpath and Private Key</description>
-        <param-name>clientkey_rsa</param-name>
-        <param-value>@clientkey-rsa@</param-value>
-    </context-param>
-
-    <context-param>
-        <description>Client EC Certpath and Private Key</description>
-        <param-name>clientkey_ec</param-name>
-        <param-value>@clientkey-ec@</param-value>
-    </context-param>
-
     <listener>
         <listener-class>org.webpki.webapps.jws_jcs.JWSService</listener-class>
      </listener>

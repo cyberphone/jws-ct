@@ -39,8 +39,6 @@ public class JWSService extends InitPropertyReader implements ServletContextList
 
     static Logger logger = Logger.getLogger(JWSService.class.getName());
 
-    static String logotype;
-    
     static String sampleSignature;
     
     static String sampleKey;
@@ -117,11 +115,6 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     public void contextInitialized(ServletContextEvent event) {
         initProperties(event);
         try {
-            // //////////////////////////////////////////////////////////////////////////////////////////
-            // Logotype
-            // //////////////////////////////////////////////////////////////////////////////////////////
-            logotype = getEmbeddedResourceString("webpki-logo.svg");
-
             // //////////////////////////////////////////////////////////////////////////////////////////
             // Sample signature for verification
             // //////////////////////////////////////////////////////////////////////////////////////////

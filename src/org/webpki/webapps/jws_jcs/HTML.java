@@ -74,18 +74,6 @@ public class HTML {
         }
     }
 
-    static String newLines2HTML(String text_with_newlines) {
-        StringBuilder result = new StringBuilder();
-        for (char c : text_with_newlines.toCharArray()) {
-            if (c == '\n') {
-                result.append("<br>");
-            } else {
-                result.append(c);
-            }
-        }
-        return result.toString();
-    }
-
     static String getHTML(String javascript, String box) {
         StringBuilder html = new StringBuilder(HTML_INIT);
         if (javascript != null) {
@@ -152,7 +140,7 @@ public class HTML {
             "</textarea></div>";
     }
     
-    static void requestPage(HttpServletResponse response, 
+    static void standardPage(HttpServletResponse response, 
                             String javaScript,
                             StringBuilder html) throws IOException, ServletException {
         HTML.output(response, HTML.getHTML(javaScript, html.toString()));
@@ -180,26 +168,6 @@ public class HTML {
         + "<tr><td>&nbsp;</td></tr>"
         + "<tr><td align=\"left\"><a target=\"_blank\" href=\"https://github.com/cyberphone/jws-jcs#combining-detached-jws-with-jcs-json-canonicalization-scheme\">JWS-JCS Documentation</a></td></tr>"
         + "</table>"));
-    }
-
-    public static void verifyPage(HttpServletResponse response,
-                                  HttpServletRequest request,
-                                  String signature) throws IOException, ServletException {
-        HTML.output(
-                response,
-                HTML.getHTML(
-                        null,
-          "<form method=\"POST\" action=\"" +
-          request.getRequestURL().toString() +
-          "\">" +
-          "<div class=\"header\">Testing JSON Signatures</div>" +
-          fancyText(true,
-                    RequestServlet.JWS_OBJECT,
-                    20, 
-                    encode(signature),
-                    "Paste a signed JSON object in the text box or try with the default") +
-          "<input type=\"submit\" value=\"Verify JSON Signature!\" name=\"sumbit\">" +
-          "</form>"));
     }
 
     public static void noWebCryptoPage(HttpServletResponse response)
@@ -460,15 +428,13 @@ public class HTML {
 
     public static void errorPage(HttpServletResponse response, String error)
             throws IOException, ServletException {
-        HTML.output(
-                response,
-                HTML.getHTML(
-                        null,
-         "<table style=\"max-width=\"300px\">"
-        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana;color:red\">Something went wrong...<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\">"
-        + newLines2HTML(encode(error)) + "</td></tr>"
-        + "</table>"));
+        standardPage(response,
+                     null,
+                     new StringBuilder(
+            "<div class=\"header\" style=\"color:red\">Something went wrong...</div>" +
+            "<div>")
+        .append(encode(error).replace("\n", "<br>"))
+        .append("</div>"));
     }
 
     public static void printResultPage(HttpServletResponse response,
