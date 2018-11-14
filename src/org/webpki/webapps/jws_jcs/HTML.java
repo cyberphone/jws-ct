@@ -37,7 +37,7 @@ public class HTML {
     static final String HTML_INIT = "<!DOCTYPE html>" +
         "<html lang=\"en\"><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">" + 
         "<meta name=\"viewport\" content=\"initial-scale=1.0\"/>" + 
-        "<title>JSON Signature Demo</title>" + 
+        "<title>JSON Signature Laboratory</title>" + 
         "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">";
 
     static String encode(String val) {
@@ -87,19 +87,24 @@ public class HTML {
     }
 
     static String getHTML(String javascript, String box) {
-        StringBuilder s = new StringBuilder(HTML_INIT);
+        StringBuilder html = new StringBuilder(HTML_INIT);
         if (javascript != null) {
-            s.append("<script>").append(javascript)
+            html.append("<script>").append(javascript)
                     .append("</script>");
         }
-        s.append("</head><body>" +
-        "<div style=\"margin:10pt 0 20pt 10pt;cursor:pointer;padding:2pt 0 0 0;width:100pt;"
-        + "height:47pt;border-width:1px;border-style:solid;border-color:black;box-shadow:3pt 3pt 3pt #D0D0D0\""
-        + " onclick=\"document.location.href='home'\" title=\"Home sweet home...\">")
-                .append(JWSService.logotype)
-                .append("</div>")
-                .append(box).append("</body></html>");
-        return s.toString();
+        html.append("</head><body>" +
+            "<div style=\"margin:10pt;display:flex;flex-wrap:wrap-reverse;justify-content:space-between\">" +
+            "<img src=\"images/thelab.svg\" " +
+            "style=\"cursor:pointer;height:25pt;padding-bottom:10pt;margin-right:30pt\"" +
+            " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/>" +
+            "<div style=\"display:flex;padding-bottom:10pt\">" +
+            "<img src=\"images/jws-jcs.svg\" " +
+            "style=\"cursor:pointer;height:20pt\"" +
+            " onclick=\"document.location.href='https://github.com/cyberphone/jws-jcs'\" title=\"Specifications, code, etc.\"/>" +
+            "</div>" +
+            "</div>")
+         .append(box).append("</body></html>");
+        return html.toString();
     }
 
     static void output(HttpServletResponse response, String html)
@@ -207,15 +212,15 @@ public class HTML {
     }
 
     static String javaScript(String string) {
-        StringBuilder s = new StringBuilder();
+        StringBuilder html = new StringBuilder();
         for (char c : string.toCharArray()) {
             if (c == '\n') {
-                s.append("\\n");
+                html.append("\\n");
             } else {
-                s.append(c);
+                html.append(c);
             }
         }
-        return s.toString();
+        return html.toString();
     }
 
     public static void webCryptoPage(HttpServletResponse response)

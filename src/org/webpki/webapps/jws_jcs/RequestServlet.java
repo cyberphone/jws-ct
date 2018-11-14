@@ -203,7 +203,7 @@ public class RequestServlet extends HttpServlet {
                                       "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
-            HTML.requestPage(response, null, html.append("<div>&nbsp;</div>"));
+            HTML.requestPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
         } catch (Exception e) {
             HTML.errorPage(response, e.getMessage());
         }
