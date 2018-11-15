@@ -176,7 +176,7 @@ public class CreateServlet extends HttpServlet {
                  .toString())
             .append(
                 "<div style=\"display:inline-block;padding:0 10pt 0 5pt\">Algorithm</div>" +
-                "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Defaults</div></div>")
+                "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Restore&nbsp;defaults</div></div>")
             .append(checkBox(FLG_JWK_INLINE, "Automagically insert public key (JWK)", false, "jwkFlagChange(this.checked)"))
             .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", false, "certFlagChange(this.checked)"))
             .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)", false, null))

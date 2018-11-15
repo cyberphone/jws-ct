@@ -20,15 +20,15 @@ li {
   border-style:solid;
   border-color:grey;
   padding:10pt;
-  box-shadow:3pt 3pt 3pt #D0D0D0;
+  box-shadow:3pt 3pt 3pt #d0d0d0;
 }
 
 .staticbox {
-  background:#F8F8F8;
+  background:#f8f8f8;
 }
 
 .textbox {
-  background:#FFFFD0;
+  background:#ffffea;
 }
 
 .header {
@@ -64,21 +64,27 @@ li {
 }
 
 .defbtn {
-  border-radius:2px;
+  border-radius:2pt;
   display:inline-block;
   cursor:pointer;
   padding:1pt 3pt;
-  background-color:#def7fc;
+  background-color:#f0f5fd;
+  border-color:#2a53ea;
 }
 
 .sigparmbox, .sigparmhead, .defbtn {
   border-width:1px;
   border-style:solid;
-  border-color:#a9a9a9;
 }
 
-.sigparmbox, .sigparmhead {
-  background-color:white;
+.sigparmhead {
+  border-color:#c85000;
+  background-color:#fffcfc;
+}
+
+.sigparmbox {
+  border-color:#008040;
+  background-color:#fbfff7;
 }
 
 .stdbtn, .multibtn, .sigparmhead {
