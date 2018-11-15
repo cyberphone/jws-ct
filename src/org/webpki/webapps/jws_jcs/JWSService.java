@@ -44,6 +44,8 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     static String sampleKey;
     
     static String keyDeclarations;
+    
+    static boolean logging;
 
     class KeyDeclaration {
         
@@ -115,15 +117,15 @@ public class JWSService extends InitPropertyReader implements ServletContextList
     public void contextInitialized(ServletContextEvent event) {
         initProperties(event);
         try {
-            // //////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////
             // Sample signature for verification
-            // //////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////
             sampleSignature = getEmbeddedResourceString("sample-signature.json");
             sampleKey = getEmbeddedResourceString("p256publickey.pem").trim();
 
-            // //////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////
             // Keys
-            // //////////////////////////////////////////////////////////////////////////////////////////
+            /////////////////////////////////////////////////////////////////////////////////////////////
             CustomCryptoProvider
                     .forcedLoad(getPropertyBoolean("bouncycastle_first"));
             
@@ -146,6 +148,11 @@ public class JWSService extends InitPropertyReader implements ServletContextList
                           .addKey(MACAlgorithms.HMAC_SHA256,            "a256")
                           .addKey(MACAlgorithms.HMAC_SHA384,            "a384")
                           .addKey(MACAlgorithms.HMAC_SHA512,            "a512").toString();
+
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            // Logging?
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            logging = getPropertyBoolean("logging");
 
             logger.info("JWS-JWS Demo Successfully Initiated");
         } catch (Exception e) {

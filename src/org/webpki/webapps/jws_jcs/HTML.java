@@ -16,7 +16,11 @@
  */
 package org.webpki.webapps.jws_jcs;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
@@ -30,9 +34,11 @@ import org.webpki.json.JSONCryptoHelper;
 
 public class HTML {
 
-    static final String SAMPLE_DATA = "{\n"
+     static Logger logger = Logger.getLogger(HTML.class.getName());
+
+     static final String SAMPLE_DATA = "{\n"
         + "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n"
-        + "  &quot;otherProperties&quot;: [2000, true]\n" + "}";
+        + "  &quot;otherProperties&quot;: [2e3, true]\n" + "}";
 
     static final String HTML_INIT = "<!DOCTYPE html>" +
         "<html lang=\"en\"><head><link rel=\"icon\" href=\"webpkiorg.png\" sizes=\"192x192\">" + 
@@ -81,14 +87,15 @@ public class HTML {
                     .append("</script>");
         }
         html.append("</head><body>" +
-            "<div style=\"margin:10pt;display:flex;flex-wrap:wrap-reverse;justify-content:space-between\">" +
+            "<div style=\"display:flex;flex-wrap:wrap-reverse;justify-content:space-between\">" +
             "<img src=\"images/thelab.svg\" " +
             "style=\"cursor:pointer;height:25pt;padding-bottom:10pt;margin-right:30pt\"" +
             " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/>" +
             "<div style=\"display:flex;padding-bottom:10pt\">" +
             "<img src=\"images/jws-jcs.svg\" " +
             "style=\"cursor:pointer;height:20pt\"" +
-            " onclick=\"document.location.href='https://github.com/cyberphone/jws-jcs'\" title=\"Specifications, code, etc.\"/>" +
+            " onclick=\"document.location.href='https://github.com/cyberphone/jws-jcs'\" " +
+            "title=\"Specifications, source code, etc.\"/>" +
             "</div>" +
             "</div>")
          .append(box).append("</body></html>");
@@ -97,7 +104,9 @@ public class HTML {
 
     static void output(HttpServletResponse response, String html)
             throws IOException, ServletException {
-        System.out.println(html);
+        if (JWSService.logging) {
+            logger.info(html);
+        }
         response.setContentType("text/html; charset=utf-8");
         response.setHeader("Pragma", "No-Cache");
         response.setDateHeader("EXPIRES", 0);
@@ -116,7 +125,7 @@ public class HTML {
     public static String boxHeader(String id, String text, boolean visible) {
         return new StringBuilder("<div id=\"")
             .append(id)
-            .append("\" style=\"padding:10pt 10pt 0 10pt")
+            .append("\" style=\"padding-top:10pt")
             .append(visible ? "" : ";display:none")
             .append("\">" +
                "<div style=\"padding-bottom:3pt\">" + text + ":</div>").toString();
@@ -144,30 +153,6 @@ public class HTML {
                             String javaScript,
                             StringBuilder html) throws IOException, ServletException {
         HTML.output(response, HTML.getHTML(javaScript, html.toString()));
-    }
-
-    public static void homePage(HttpServletResponse response, String baseurl)
-            throws IOException, ServletException {
-        HTML.output(
-                response,
-                HTML.getHTML(
-                        null,
-          "<table style=\"max-width=\"300px\">"
-        + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">JSON Clear Text Signature<br>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\"><a href=\""
-        + baseurl
-        + "/verify\">Verify a JWS-JCS on the server</a></td></tr>"
-        + "<tr><td>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\"><a href=\""
-        + baseurl
-        + "/create\">Create a JWS-JCS on the server</a></td></tr>"
-        + "<tr><td>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\"><a href=\""
-        + baseurl
-        + "/webcrypto\">Create a JWS-JCS using WebCrypto</a></td></tr>"
-        + "<tr><td>&nbsp;</td></tr>"
-        + "<tr><td align=\"left\"><a target=\"_blank\" href=\"https://github.com/cyberphone/jws-jcs#combining-detached-jws-with-jcs-json-canonicalization-scheme\">JWS-JCS Documentation</a></td></tr>"
-        + "</table>"));
     }
 
     public static void noWebCryptoPage(HttpServletResponse response)
@@ -426,19 +411,27 @@ public class HTML {
         HTML.output(response, html.append("</script></body></html>").toString());
     }
 
-    public static void errorPage(HttpServletResponse response, String error)
+    public static void errorPage(HttpServletResponse response, Exception e)
             throws IOException, ServletException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintWriter printerWriter = new PrintWriter(baos);
+        e.printStackTrace(printerWriter);
+        printerWriter.flush();
+        String stackTrace = baos.toString("utf-8");
+        StringBuilder error = new StringBuilder(e.getMessage())
+            .append("\nStack trace:\n");
+        int begin = 0;
+        for (int q = 0; q < 20; q++) {
+            int end = stackTrace.indexOf('\n', begin);
+            if (end < 0) break;
+            error.append(stackTrace.substring(begin, begin = ++end));
+        }
         standardPage(response,
                      null,
                      new StringBuilder(
             "<div class=\"header\" style=\"color:red\">Something went wrong...</div>" +
             "<div>")
-        .append(encode(error).replace("\n", "<br>"))
+        .append(encode(error.toString()).replace("\n", "<br>"))
         .append("</div>"));
-    }
-
-    public static void printResultPage(HttpServletResponse response,
-            String message) throws IOException, ServletException {
-        HTML.output(response, HTML.getHTML(null, message));
     }
 }

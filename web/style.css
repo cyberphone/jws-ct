@@ -1,5 +1,5 @@
 body {
-  margin:0pt;
+  margin:10pt;
   font-size:8pt;
   font-family:Verdana,'Bitstream Vera Sans','DejaVu Sans',Arial,'Liberation Sans';
 }
@@ -38,6 +38,18 @@ li {
   font-family:arial,verdana;
 }
 
+.sitefooter {
+  display:flex;
+  align-items:center;
+  border-width:1px 0 0 0;
+  border-style:solid;
+  position:absolute;
+  z-index:5;
+  left:0px;
+  bottom:0px;
+  right:0px;
+  padding:0.5em 0.7em;
+}
 
 .stdbtn, .multibtn {
   cursor:pointer;
@@ -77,7 +89,7 @@ li {
   border-style:solid;
 }
 
-.sigparmhead {
+.sigparmhead, .sitefooter {
   border-color:#c85000;
   background-color:#fffcfc;
 }
@@ -114,12 +126,4 @@ li {
     box-shadow:2pt 2pt 2pt #d0d0d0;
   }
 
-  .header {
-    font-size:12pt;
-  }
-
-  .header {
-    padding-bottom:10pt;
-  }
- 
 }

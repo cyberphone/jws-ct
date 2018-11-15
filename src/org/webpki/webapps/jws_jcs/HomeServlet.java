@@ -24,13 +24,62 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.webpki.webutil.ServletUtil;
-
 public class HomeServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
 
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        HTML.homePage(response, ServletUtil.getContextURL(request));
+/*
+            HTML.output(
+                    response,
+                    HTML.getHTML(
+                            null,
+              "<table style=\"max-width=\"300px\">"
+            + "<tr><td align=\"center\" style=\"font-weight:bolder;font-size:10pt;font-family:arial,verdana\">JSON Clear Text Signature<br>&nbsp;</td></tr>"
+            + "<tr><td align=\"left\"><a href=\""
+            + baseurl
+            + "/verify\">Verify a JWS-JCS on the server</a></td></tr>"
+            + "<tr><td>&nbsp;</td></tr>"
+            + "<tr><td align=\"left\"><a href=\""
+            + baseurl
+            + "/create\">Create a JWS-JCS on the server</a></td></tr>"
+            + "<tr><td>&nbsp;</td></tr>"
+            + "<tr><td align=\"left\"><a href=\""
+            + baseurl
+            + "/webcrypto\">Create a JWS-JCS using WebCrypto</a></td></tr>"
+            + "<tr><td>&nbsp;</td></tr>"
+            + "<tr><td align=\"left\"><a target=\"_blank\" href=\"https://github.com/cyberphone/jws-jcs#combining-detached-jws-with-jcs-json-canonicalization-scheme\">JWS-JCS Documentation</a></td></tr>"
+            + "</table>"));
+        }
+*/
+
+
+        HTML.standardPage(response, null, new StringBuilder(
+            "<div class=\"header\">JSON Clear Text Signature</div>" +
+            "<div style=\"padding-top:15pt\">This site permits testing and debugging systems utlizing a " +
+            "scheme for clear text JSON signatures tentatively targeted for " +
+            "IETF standardization.  For detailed technical information and " +
+            "open source code, click on the JWS&#x2022;JCS logotype.</div>" +
+            "<div style=\"display:flex;justify-content:center\"><table>" +
+            "<tr><td><div class=\"multibtn\" " +
+            "onclick=\"document.location.href='create'\" " +
+            "title=\"Create JSON signatures\">" +
+            "Create JSON Signatures" +
+            "</div></td></tr>" +
+            "<tr><td><div class=\"multibtn\" " +
+            "onclick=\"document.location.href='verify'\" " +
+            "title=\"Verify JSON signatures\">" +
+            "Verify JSON Signatures" +
+            "</div></td></tr>" +
+            "<tr><td><div class=\"multibtn\" " +
+            "onclick=\"document.location.href='webcrypto'\" " +
+            "title=\"Using W3C WebCrypto\">" +
+            "Using W3C WebCrypto" +
+            "</div></td></tr>" +
+            "</table></div>" +
+            "<div class=\"sitefooter\">Privacy/security notice: No user provided data is " +
+            "ever stored or logged on the server; it only process the data and returns the " +
+            "result.</div>"));
     }
 }

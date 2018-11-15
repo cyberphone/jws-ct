@@ -153,10 +153,7 @@ public class CreateServlet extends HttpServlet {
                         true,
                         PRM_JSON_DATA,
                         10,
-                        "{\n" +
-                        "  &quot;statement&quot;: &quot;Hello signed world!&quot;,\n" +
-                        "  &quot;otherProperties&quot;: [2e+3, true]\n" +
-                        "}",
+                        "",
                         "Paste an unsigned JSON object in the text box or try with the default") +
                  "<div style=\"display:flex;justify-content:center;margin-top:20pt\">" +
                  "<div class=\"sigparmbox\">" +
@@ -185,7 +182,7 @@ public class CreateServlet extends HttpServlet {
                 "</div>" +
                 "<div style=\"display:flex;justify-content:center\">" +
                 "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
-                "Create JSON Signature!" +
+                "Create JSON Signature" +
                 "</div>" +
                 "</div>")
             .append(
@@ -214,7 +211,7 @@ public class CreateServlet extends HttpServlet {
                           "Certificate path in PEM format"))
             .append(
                 "</form>" +
-                "<div style=\"padding:15pt\">Note: No data is stored on the server, it only passes it!</div>");
+                "<div>&nbsp;</div>");
         js.append(
             "function fill(element, alg, keyHolder) {\n" +
             "  document.getElementById(element).children[1].value = keyHolder[alg];\n" +
@@ -247,6 +244,9 @@ public class CreateServlet extends HttpServlet {
             JWSService.KeyDeclaration.CERTIFICATES + ");\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
+            "  document.getElementById('" + PRM_JSON_DATA + "').children[1].value = '{\\n" +
+            "  \"statement\": \"Hello signed world!\",\\n" +
+            "  \"otherProperties\": [2e+3, true]\\n}';\n" +
             "  document.getElementById('" + PRM_JWS_EXTRA + "').children[1].value = '{\\n}';\n" +
             "}\n" +
             "function jwkFlagChange(flag) {\n" +
@@ -470,7 +470,9 @@ public class CreateServlet extends HttpServlet {
                 .serializeToString(JSONOutputFormats.NORMALIZED);
 
             // How things should appear in a "regular" JWS
-            logger.info(jwsHeaderB64 + '.' + payloadB64 + '.' + signatureB64);
+            if (JWSService.logging) {
+                logger.info(jwsHeaderB64 + '.' + payloadB64 + '.' + signatureB64);
+            }
 
             // The following is just for the demo.  That is, we want to preserve
             // the original ("untouched") JSON data for educational purposes.
@@ -494,7 +496,7 @@ public class CreateServlet extends HttpServlet {
                 URLEncoder.encode(validationKey, "utf-8"))
                     .forward(request, response);
         } catch (Exception e) {
-            HTML.errorPage(response, e.getMessage());
+            HTML.errorPage(response, e);
         }
     }
 }

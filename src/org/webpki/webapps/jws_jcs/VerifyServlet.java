@@ -50,14 +50,13 @@ public class VerifyServlet extends HttpServlet {
                 HTML.encode(JWSService.sampleKey),
                 "Validation key (secret key in hexadecimal or public key in PEM or &quot;plain&quot; JWK format)"))
             .append(
-                "</div>" +
-                "</div>" +
                 "<div style=\"display:flex;justify-content:center\">" +
                 "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
-                "Verify JSON Signature!" +
+                "Verify JSON Signature" +
                 "</div>" +
                 "</div>" +
-                "</form>"));
+                "</form>" +
+                "<div>&nbsp;</div>"));
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)

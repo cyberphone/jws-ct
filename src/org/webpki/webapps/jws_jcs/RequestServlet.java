@@ -67,12 +67,11 @@ public class RequestServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        request.setCharacterEncoding("utf-8");
-        if (!request.getContentType().startsWith("application/x-www-form-urlencoded")) {
-            HTML.errorPage(response, "Unexpected MIME type:" + request.getContentType());
-            return;
-        }
         try {
+            request.setCharacterEncoding("utf-8");
+            if (!request.getContentType().startsWith("application/x-www-form-urlencoded")) {
+                throw new IOException("Unexpected MIME type:" + request.getContentType());
+            }
             logger.info("JSON Signature Verification Entered");
             // Get the two input data items
             String signedJsonObject = CreateServlet.getParameter(request, JWS_OBJECT);
@@ -187,7 +186,7 @@ public class RequestServlet extends HttpServlet {
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
-                .append(HTML.fancyBox("algo", 
+                .append(HTML.fancyBox("header", 
                                       jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
                                       "Decoded JWS header"))
                 .append(HTML.fancyBox("vkey",
@@ -196,11 +195,14 @@ public class RequestServlet extends HttpServlet {
                                               .serializeToString(JSONOutputFormats.PRETTY_HTML)
                                                        :
                                       HTML.encode(validationKey).replace("\n", "<br>"),
-                                      macFlag ? "Secret validation key in hexadecimal"
-                                              : "Public validation key"))
-                .append(HTML.fancyBox("canonicalized", 
+                                      "Signature validation " + (macFlag ? 
+                                             "secret key in hexadecimal" :
+                                             "public key in " + 
+                                             (jwkValidationKey ? "JWK" : "PEM") +
+                                             " format")))
+                .append(HTML.fancyBox("canonical", 
                                       HTML.encode(new String(jsonData, "utf-8")),
-                                      "Canonicalized version of the JSON data (with possible line breaks " +
+                                      "Canonical version of the JSON data (with possible line breaks " +
                                       "for display purposes only)"));
             if (certificateData != null) {
                 html.append(HTML.fancyBox("certpath", 
@@ -214,7 +216,7 @@ public class RequestServlet extends HttpServlet {
             // Finally, print it out
             HTML.standardPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
         } catch (Exception e) {
-            HTML.errorPage(response, e.getMessage());
+            HTML.errorPage(response, e);
         }
     }
 }

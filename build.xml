@@ -7,6 +7,9 @@
   <property name="temp.dir" value=".tmp"/>
   <property name="dist.dir" value="dist"/>
   <property name="class_war_path" value="WEB-INF/classes/org/webpki/webapps/jws_jcs"/>
+
+  <property name="logging" value="false"/>
+  <property name="bouncycastle.first" value="true"/>
   
   <property name="appcorename" value="jws-jcs"/>
   <property name="application" value="${appcorename}.war"/>
@@ -71,10 +74,9 @@
               </fileset>
         </classpath>
     </javac>
-    <property name="clientkey" value="${clientkey_rsa}"/>
-    <property name="bouncycastle.first" value="true"/>
     <replace file="${temp.dir}/web.xml">
       <replacefilter token="@bouncycastle-first@" value="${bouncycastle.first}"/>
+      <replacefilter token="@logging@" value="${logging}"/>
     </replace>
     <war destfile="${dist.dir}/${application}" webxml="${temp.dir}/web.xml">
       <classes dir="${temp.dir}">

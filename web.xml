@@ -10,6 +10,12 @@
         <param-value>@bouncycastle-first@</param-value>
     </context-param>
 
+    <context-param>
+        <description>Logging flag</description>
+        <param-name>logging</param-name>
+        <param-value>@logging@</param-value>
+    </context-param>
+
     <listener>
         <listener-class>org.webpki.webapps.jws_jcs.JWSService</listener-class>
      </listener>

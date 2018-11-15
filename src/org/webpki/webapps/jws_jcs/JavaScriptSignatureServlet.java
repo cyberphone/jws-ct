@@ -37,30 +37,31 @@ public class JavaScriptSignatureServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        request.setCharacterEncoding("utf-8");
-        if (request.getContentType().startsWith("application/x-www-form-urlencoded")) {
-            try {
-                String htmlSafe = HTML.encode(
-                    JSONParser.parse(CreateServlet.getParameter(request, 
-                                                                RequestServlet.JWS_OBJECT))
-                        .serializeToString(JSONOutputFormats.PRETTY_JS_NATIVE))
-                            .replace("\n", "<br>")
-                            .replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;");
-                HTML.standardPage(response,
-                                  null, 
-                                  new StringBuilder("<div class=\"header\">Signatures in JavaScript Notation</div>")
-                                      .append(HTML.fancyBox("verify",
-                                                            htmlSafe,
-                                                            "JSON object featuring a 'detached' JWS signature element"))
-                                      .append("<div style=\"padding:20pt 10pt\">Note that the signature above is not verified.  The only difference between " +
-                                              "the JavaScript notation and &quot;true&quot; JSON is the removal of the (usually redundant) quote characters " +
-                                              "around property names.  Names that interfere with JavaScript naming " +
-                                              "conventions for variables like '5' or 'my.prop' will though be quoted.</div>"));
-            } catch (IOException e) {
-                HTML.errorPage(response, e.getMessage());
+        try {
+            request.setCharacterEncoding("utf-8");
+            if (!request.getContentType().startsWith("application/x-www-form-urlencoded")) {
+                throw new IOException("Unexpected MIME type: " + request.getContentType());
             }
-            return;
+            String htmlSafe = HTML.encode(
+                JSONParser.parse(CreateServlet.getParameter(request, 
+                                                            RequestServlet.JWS_OBJECT))
+                    .serializeToString(JSONOutputFormats.PRETTY_JS_NATIVE))
+                        .replace("\n", "<br>")
+                        .replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;");
+            HTML.standardPage(response,
+                              null, 
+                              new StringBuilder("<div class=\"header\">Signatures in JavaScript Notation</div>")
+                                  .append(HTML.fancyBox("verify",
+                                                        htmlSafe,
+                                                        "JavaScript compatible object featuring an embedded JWS signature element"))
+                                  .append("<div style=\"padding-top:20pt\">Note that the signature above is not verified.  The only difference between " +
+                                          "the JavaScript notation and &quot;true&quot; JSON is the removal of the (usually redundant) quote characters " +
+                                          "around property names.  Names that interfere with JavaScript naming " +
+                                          "conventions for variables like '5' or 'my.prop' will though be quoted.</div>" +
+                                          "<div style=\"padding-top:5pt\">Since the JavaScript <code>JSON.stringify()</code> " +
+                                          "method restores the \"true\" JSON format, the two notations are fully interoperable.</div>"));
+        } catch (IOException e) {
+            HTML.errorPage(response, e);
         }
-        HTML.errorPage(response, "Unexpected MIME type: " + request.getContentType());
     }
 }
