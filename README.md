@@ -1,3 +1,5 @@
+![JWS-JCS](https://cyberphone.github.io/doc/security/jws-jcs.svg)
+
 ## Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
 This repository contains a PoC showing how you can create "clear text" JSON signatures
 by combining detached JWS compact objects with a simple
