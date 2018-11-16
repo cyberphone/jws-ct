@@ -46,8 +46,9 @@ public class WebCryptoServlet extends HttpServlet {
                 "name=\"" + RequestServlet.JWS_VALIDATION_KEY + "\">" +
                 "</form>" +
                 "<div class=\"header\">WebCrypto / JWS-JCS Demo</div>" +
-                "<div style=\"text-align:center;padding-top:15pt\">This demo only relies on ES6 and WebCrypto features and " +
-                "does not refer to any external libraries either.</div>" +
+                "<div style=\"display:flex;justify-content:center;padding-top:15pt\"><div>" +
+                "This demo only relies on ES6 and WebCrypto features and " +
+                "does not refer to any external libraries either.</div></div>" +
                 "<div style=\"display:flex;justify-content:center\">" +
                 "<div class=\"stdbtn\" onclick=\"createKey()\">" +
                 "Create RSA Key Pair" +
