@@ -213,8 +213,9 @@ public class CreateServlet extends HttpServlet {
                 "</form>" +
                 "<div>&nbsp;</div>");
         js.append(
-            "function fill(element, alg, keyHolder) {\n" +
-            "  document.getElementById(element).children[1].value = keyHolder[alg];\n" +
+            "function fill(id, alg, keyHolder, unconditionally) {\n" +
+            "  let element = document.getElementById(id).children[1];\n" +
+            "  if (unconditionally || element.value == '') element.value = keyHolder[alg];\n" +
             "}\n" +
             "function disableAndClearCheckBox(id) {\n" +
             "  let checkBox = document.getElementById(id);\n" +
@@ -224,30 +225,32 @@ public class CreateServlet extends HttpServlet {
             "function enableCheckBox(id) {\n" +
             "  document.getElementById(id).disabled = false;\n" +
             "}\n" +
-            "function setParameters(alg) {\n" +
+            "function setParameters(alg, unconditionally) {\n" +
             "  if (alg.startsWith('HS')) {\n" +
             "    showCert(false);\n" +
             "    showPriv(false);\n" +
             "    disableAndClearCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    disableAndClearCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_SECRET_KEY + "', alg, " + 
-                 JWSService.KeyDeclaration.SECRET_KEYS + ");\n" +
+                 JWSService.KeyDeclaration.SECRET_KEYS + ", unconditionally);\n" +
             "    showSec(true)\n" +
             "  } else {\n" +
             "    showSec(false)\n" +
             "    enableCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    enableCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_PRIVATE_KEY + "', alg, " + 
-            JWSService.KeyDeclaration.PRIVATE_KEYS + ");\n" +
+            JWSService.KeyDeclaration.PRIVATE_KEYS + ", unconditionally);\n" +
             "    showPriv(true);\n" +
             "    fill('" + PRM_CERT_PATH + "', alg, " + 
-            JWSService.KeyDeclaration.CERTIFICATES + ");\n" +
+            JWSService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
-            "  document.getElementById('" + PRM_JSON_DATA + "').children[1].value = '{\\n" +
+            "  let element = document.getElementById('" + PRM_JSON_DATA + "').children[1];\n" +
+            "  if (unconditionally || element.value == '') element.value = '{\\n" +
             "  \"statement\": \"Hello signed world!\",\\n" +
             "  \"otherProperties\": [2e+3, true]\\n}';\n" +
-            "  document.getElementById('" + PRM_JWS_EXTRA + "').children[1].value = '{\\n}';\n" +
+            "  element = document.getElementById('" + PRM_JWS_EXTRA + "').children[1];\n" +
+            "  if (unconditionally || element.value == '') element.value = '{\\n}';\n" +
             "}\n" +
             "function jwkFlagChange(flag) {\n" +
             "  if (flag) {\n" +
@@ -269,14 +272,14 @@ public class CreateServlet extends HttpServlet {
             "      break;\n" +
             "    }\n" +
             "  }\n" +
-            "  setParameters('" + DEFAULT_ALG + "');\n" +
+            "  setParameters('" + DEFAULT_ALG + "', true);\n" +
             "  document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
             "}\n" +
             "function algChange(alg) {\n" +
             "console.log('alg=' + alg);\n" +
-            "  setParameters(alg);\n" +
+            "  setParameters(alg, true);\n" +
             "}\n" +
             "function showCert(show) {\n" +
             "  document.getElementById('" + PRM_CERT_PATH + "').style.display= show ? 'block' : 'none';\n" +
@@ -288,8 +291,8 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + PRM_SECRET_KEY + "').style.display= show ? 'block' : 'none';\n" +
             "}\n" +
             "window.addEventListener('load', function(event) {\n" +
-            "  setParameters(document.getElementById('" + PRM_ALGORITHM  + "').value);\n" +
-             "});\n");
+            "  setParameters(document.getElementById('" + PRM_ALGORITHM + "').value, false);\n" +
+            "});\n");
         HTML.standardPage(response, 
                          js.toString(),
                          html);
