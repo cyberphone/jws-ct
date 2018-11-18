@@ -83,10 +83,9 @@ public class HTML {
             "style=\"cursor:pointer;height:25pt;padding-bottom:10pt;margin-right:30pt\"" +
             " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/>" +
             "<div style=\"display:flex;padding-bottom:10pt\">" +
-            "<img src=\"images/jws-jcs.svg\" " +
-            "style=\"cursor:pointer;height:20pt\"" +
-            " onclick=\"document.location.href='https://github.com/cyberphone/jws-jcs'\" " +
-            "title=\"Specifications, source code, etc.\"/>" +
+            "<a href=\"https://github.com/cyberphone/jws-jcs\" target=\"_blank\"><img src=\"images/jws-jcs.svg\" " +
+            "style=\"height:20pt\"" +
+             "title=\"Specifications, source code, etc.\"/></a>" +
             "</div>" +
             "</div>")
          .append(box).append("</body></html>");
