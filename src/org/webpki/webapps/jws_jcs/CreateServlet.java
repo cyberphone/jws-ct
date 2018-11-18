@@ -225,6 +225,14 @@ public class CreateServlet extends HttpServlet {
             "function enableCheckBox(id) {\n" +
             "  document.getElementById(id).disabled = false;\n" +
             "}\n" +
+            "function setUserData(unconditionally) {\n" +
+            "  let element = document.getElementById('" + PRM_JSON_DATA + "').children[1];\n" +
+            "  if (unconditionally || element.value == '') element.value = '{\\n" +
+            "  \"statement\": \"Hello signed world!\",\\n" +
+            "  \"otherProperties\": [2e+3, true]\\n}';\n" +
+            "  element = document.getElementById('" + PRM_JWS_EXTRA + "').children[1];\n" +
+            "  if (unconditionally || element.value == '') element.value = '{\\n}';\n" +
+            "}\n" +
             "function setParameters(alg, unconditionally) {\n" +
             "  if (alg.startsWith('HS')) {\n" +
             "    showCert(false);\n" +
@@ -245,12 +253,6 @@ public class CreateServlet extends HttpServlet {
             JWSService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
-            "  let element = document.getElementById('" + PRM_JSON_DATA + "').children[1];\n" +
-            "  if (unconditionally || element.value == '') element.value = '{\\n" +
-            "  \"statement\": \"Hello signed world!\",\\n" +
-            "  \"otherProperties\": [2e+3, true]\\n}';\n" +
-            "  element = document.getElementById('" + PRM_JWS_EXTRA + "').children[1];\n" +
-            "  if (unconditionally || element.value == '') element.value = '{\\n}';\n" +
             "}\n" +
             "function jwkFlagChange(flag) {\n" +
             "  if (flag) {\n" +
@@ -276,9 +278,9 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
+            "  setUserData(true);\n" +
             "}\n" +
             "function algChange(alg) {\n" +
-            "console.log('alg=' + alg);\n" +
             "  setParameters(alg, true);\n" +
             "}\n" +
             "function showCert(show) {\n" +
@@ -292,6 +294,7 @@ public class CreateServlet extends HttpServlet {
             "}\n" +
             "window.addEventListener('load', function(event) {\n" +
             "  setParameters(document.getElementById('" + PRM_ALGORITHM + "').value, false);\n" +
+            "  setUserData(false);\n" +
             "});\n");
         HTML.standardPage(response, 
                          js.toString(),
