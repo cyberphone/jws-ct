@@ -21,7 +21,6 @@ li {
   border-style:solid;
   border-color:grey;
   padding:10pt;
-  box-shadow:3pt 3pt 3pt #d0d0d0;
 }
 
 .staticbox {
@@ -105,7 +104,7 @@ li {
   font-size:10pt;
 }
 
-.stdbtn, .multibtn, .sigparmbox {
+.stdbtn, .multibtn, .sigparmbox, .staticbox, .textbox {
   box-shadow:3pt 3pt 3pt #d0d0d0;
 }
 
@@ -124,7 +123,7 @@ li {
 
 @media (max-width:768px) {
 
-  .stdbtn, .multibtn, .sigparmbox{
+  .stdbtn, .multibtn, .sigparmbox, .staticbox, .textbox {
     box-shadow:2pt 2pt 2pt #d0d0d0;
   }
 
