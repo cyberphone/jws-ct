@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
+
+import org.webpki.jose.JOSESupport;
 
 import org.webpki.json.JSONCryptoHelper;
 
@@ -224,14 +226,14 @@ public class WebCryptoServlet extends HttpServlet {
                 "      return;\n" + 
                 "    }\n" + 
                 "    if (jsonObject." + 
-                JSONCryptoHelper.SIGNATURE_JSON + 
+                RequestServlet.SIGNATURE_LABEL_JSON + 
                 ") {\n" + 
                 "      bad('sign.res', 'Object is already signed');\n" + 
                 "      return;\n" + 
                 "    }\n" + 
                 "    var jwsHeader = {};\n" + 
                 "    jwsHeader." + 
-                JSONCryptoHelper.ALG_JSON + 
+                JOSESupport.ALG_JSON + 
                 " = '" + 
                 AsymSignatureAlgorithms.RSA_SHA256.getAlgorithmId(AlgorithmPreferences.JOSE) + 
                 "';\n" + 
@@ -265,7 +267,7 @@ public class WebCryptoServlet extends HttpServlet {
                    RequestServlet.JWS_VALIDATION_KEY + 
                 "').value = JSON.stringify(publicKeyObject);\n" +
                 "    jsonObject." + 
-                JSONCryptoHelper.SIGNATURE_JSON + 
+                RequestServlet.SIGNATURE_LABEL_JSON + 
                 " = jwsHeaderB64 + '..' + convertToBase64URL(new Uint8Array(signature));\n" + 
                 "    document.getElementById('" + RequestServlet.JWS_OBJECT +
                 "').value = JSON.stringify(jsonObject);\n" +

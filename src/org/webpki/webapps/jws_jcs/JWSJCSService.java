@@ -35,9 +35,9 @@ import org.webpki.util.ArrayUtil;
 
 import org.webpki.webutil.InitPropertyReader;
 
-public class JWSService extends InitPropertyReader implements ServletContextListener {
+public class JWSJCSService extends InitPropertyReader implements ServletContextListener {
 
-    static Logger logger = Logger.getLogger(JWSService.class.getName());
+    static Logger logger = Logger.getLogger(JWSJCSService.class.getName());
 
     static String sampleSignature;
     

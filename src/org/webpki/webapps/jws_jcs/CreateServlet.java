@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,26 +18,9 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 
-import java.math.BigInteger;
-
 import java.net.URLEncoder;
 
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
-import java.security.cert.X509Certificate;
-
-import java.security.interfaces.RSAPrivateCrtKey;
-
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAPublicKeySpec;
-
-import java.util.Vector;
 
 import java.util.logging.Logger;
 
@@ -47,19 +30,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.webpki.asn1.ASN1Sequence;
-import org.webpki.asn1.DerDecoder;
-import org.webpki.asn1.ParseUtil;
-
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
-import org.webpki.crypto.CertificateUtil;
-import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
-import org.webpki.crypto.SignatureWrapper;
 
-import org.webpki.json.JSONCryptoHelper;
+import org.webpki.jose.JOSEAsymKeyHolder;
+import org.webpki.jose.JOSESupport;
+import org.webpki.jose.JOSESymKeyHolder;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
@@ -68,6 +46,7 @@ import org.webpki.json.JSONParser;
 import org.webpki.util.Base64;
 import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
+import org.webpki.util.PEMDecoder;
 
 public class CreateServlet extends HttpServlet {
     
@@ -145,7 +124,7 @@ public class CreateServlet extends HttpServlet {
             throws IOException, ServletException {
         String selected = "ES256";
         StringBuilder js = new StringBuilder("\"use strict\";\n")
-            .append(JWSService.keyDeclarations);
+            .append(JWSJCSService.keyDeclarations);
         StringBuilder html = new StringBuilder(
                 "<form name=\"shoot\" method=\"POST\" action=\"create\">" +
                 "<div class=\"header\">JSON Signature Creation</div>" +
@@ -240,17 +219,17 @@ public class CreateServlet extends HttpServlet {
             "    disableAndClearCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    disableAndClearCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_SECRET_KEY + "', alg, " + 
-                 JWSService.KeyDeclaration.SECRET_KEYS + ", unconditionally);\n" +
+                 JWSJCSService.KeyDeclaration.SECRET_KEYS + ", unconditionally);\n" +
             "    showSec(true)\n" +
             "  } else {\n" +
             "    showSec(false)\n" +
             "    enableCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    enableCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_PRIVATE_KEY + "', alg, " + 
-            JWSService.KeyDeclaration.PRIVATE_KEYS + ", unconditionally);\n" +
+            JWSJCSService.KeyDeclaration.PRIVATE_KEYS + ", unconditionally);\n" +
             "    showPriv(true);\n" +
             "    fill('" + PRM_CERT_PATH + "', alg, " + 
-            JWSService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
+            JWSJCSService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
             "}\n" +
@@ -308,6 +287,10 @@ public class CreateServlet extends HttpServlet {
         }
         return string.trim();
     }
+    
+    static byte[] getBinaryParameter(HttpServletRequest request, String parameter) throws IOException {
+        return getParameter(request, parameter).getBytes("utf-8");
+    }
 
     static String getTextArea(HttpServletRequest request, String name)
             throws IOException {
@@ -321,64 +304,7 @@ public class CreateServlet extends HttpServlet {
         return s.toString();
     }
 
-
-    static Vector<byte[]> getPemBlobs(String pemData,
-                                      String type) throws IOException {
-        Vector<byte[]> blobs = new Vector<byte[]>();
-        do {
-            if (!pemData.startsWith("-----BEGIN " + type + "-----")) {
-                if (pemData.startsWith("-----BEGIN RSA") || pemData.startsWith("-----BEGIN EC")) {
-                    throw new IOException("This application only supports PEM formatted private keys compliant with PKCS #8 (consult OpenSSL)");
-                }
-                throw new IOException("PEM BEGIN error in: " + type);
-            }
-            int i = pemData.indexOf("-----END " + type + "-----");
-            if (i < 0) {
-                throw new IOException("PEM END error in: " + type);
-            }
-            try {
-                byte[] blob = new Base64()
-                    .getBinaryFromBase64String(pemData.substring(16 + type.length(), i));
-                blobs.add(blob);
-            } catch (IOException e) {
-                throw new IOException("PEM data error in: " + type + 
-                                      " reason: " + e.getMessage());
-            }
-            pemData = pemData.substring(i + type.length() + 14).trim();
-        } while (pemData.length() != 0);
-        return blobs;
-    }
-    
-    static byte[] getPemBlob(String pemData,
-                             String type) throws IOException {
-        Vector<byte[]> blobs = getPemBlobs(pemData, type);
-        if (blobs.size() != 1) throw new IOException("Only one element is allowed for: " + type);
-        return blobs.firstElement();
-    }
-    
-
-    PublicKey ecPublicKeyFromPKCS8(byte[] privateKeyBlob) throws IOException, GeneralSecurityException {
-        ASN1Sequence seq = ParseUtil.sequence(DerDecoder.decode(privateKeyBlob), 3);
-        String oid = ParseUtil.oid(ParseUtil.sequence(seq.get(1), 2).get(1)).oid();
-        seq = ParseUtil.sequence(DerDecoder.decode(ParseUtil.octet(seq.get(2))));
-        byte[] publicKey = ParseUtil.bitstring(ParseUtil.singleContext(seq.get(seq.size() -1), 1));
-        int length = (publicKey.length - 1) / 2;
-        byte[] parm = new byte[length];
-        System.arraycopy(publicKey, 1, parm, 0, length);
-        BigInteger x = new BigInteger(1, parm);
-        System.arraycopy(publicKey, 1 + length, parm, 0, length);
-        BigInteger y = new BigInteger(1, parm);
-        for (KeyAlgorithms ka : KeyAlgorithms.values()) {
-            if (oid.equals(ka.getECDomainOID())) {
-                if (oid.equals(ka.getECDomainOID())) {
-                    ECPoint w = new ECPoint(x, y);
-                    return KeyFactory.getInstance("EC").generatePublic(new ECPublicKeySpec(w, ka.getECParameterSpec()));
-                }
-            }
-        }
-        throw new IOException("Failed creating EC public key from private key");
-    }
-    
+   
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
          try {
@@ -396,7 +322,7 @@ public class CreateServlet extends HttpServlet {
             JSONObjectWriter jwsHeader = new JSONObjectWriter();
 
             // Create the minimal JWS header
-            jwsHeader.setString(JSONCryptoHelper.ALG_JSON, algorithm);
+            jwsHeader.setString(JOSESupport.ALG_JSON, algorithm);
 
             // Add any optional (by the user specified) arguments
             for (String key : additionalHeaderData.getProperties()) {
@@ -404,80 +330,56 @@ public class CreateServlet extends HttpServlet {
             }
             
             // Get the signature key
-            PrivateKey privateKey = null;
-            byte[] secretKey = null;
+            JOSESupport.CoreKeyHolder keyHolder;
             String validationKey;
             
             // Symmetric or asymmetric?
             if (algorithm.startsWith("HS")) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
-                secretKey = DebugFormatter.getByteArrayFromHex(validationKey);
+                keyHolder = new JOSESymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey));
             } else {
                 // To simplify UI we require PKCS #8 with the public key embedded
                 // but we also support JWK which also has the public key
-                PublicKey publicKey;
-                String privateKeyString = getParameter(request, PRM_PRIVATE_KEY);
-                if (privateKeyString.startsWith("{")) {
-                    KeyPair keyPair = JSONParser.parse(privateKeyString).getKeyPair();
-                    publicKey = keyPair.getPublic();
-                    privateKey = keyPair.getPrivate();
-                } else {
-                    byte[] privateKeyBlob = getPemBlob(privateKeyString, "PRIVATE KEY");
-                    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBlob);
-                    if (algorithm.startsWith("ES")) {
-                        privateKey = KeyFactory.getInstance("EC").generatePrivate(keySpec);
-                        publicKey = ecPublicKeyFromPKCS8(privateKeyBlob);
-                    } else {
-                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                        privateKey = keyFactory.generatePrivate(keySpec);
-                        RSAPrivateCrtKey privk = (RSAPrivateCrtKey)privateKey;
-                        RSAPublicKeySpec publicKeySpec = 
-                                new RSAPublicKeySpec(privk.getModulus(), privk.getPublicExponent());
-                        publicKey = keyFactory.generatePublic(publicKeySpec);
-                    }
+                byte[] privateKeyBlob = getBinaryParameter(request, PRM_PRIVATE_KEY);
+                KeyPair keyPair;
+                if (privateKeyBlob[0] == '{') {
+                    keyPair = JSONParser.parse(privateKeyBlob).getKeyPair();
+                 } else {
+                    keyPair = PEMDecoder.getKeyPair(privateKeyBlob);
                 }
-                privateKeyString = null;  // Nullify it after use
+                privateKeyBlob = null;  // Nullify it after use
                 validationKey = "-----BEGIN PUBLIC KEY-----\n" +
-                                new Base64().getBase64StringFromBinary(publicKey.getEncoded()) +
+                                new Base64().getBase64StringFromBinary(keyPair.getPublic().getEncoded()) +
                                 "\n-----END PUBLIC KEY-----";
 
                 // Add other JWS header data that the demo program fixes 
                 if (certOption) {
-                    X509Certificate[] certificatePath =
-                        CertificateUtil
-                            .makeCertificatePath(getPemBlobs(getParameter(request, PRM_CERT_PATH),
-                                                             "CERTIFICATE"));
-                    jwsHeader.setCertificatePath(certificatePath);
+                    JOSESupport.setCertificatePath(jwsHeader,
+                            PEMDecoder.getCertificatePath(getBinaryParameter(request,
+                                                                             PRM_CERT_PATH)));
                 } else if (keyInlining) {
-                    jwsHeader.setPublicKey(publicKey);
+                    JOSESupport.setPublicKey(jwsHeader, keyPair.getPublic());
                 }
+                keyHolder = new JOSEAsymKeyHolder(keyPair.getPrivate());
             }
 
             // Creating JWS data to be signed
-            String jwsHeaderB64 = Base64URL.encode(jwsHeader.serializeToBytes(JSONOutputFormats.NORMALIZED));
-            String payloadB64 = Base64URL.encode(reader.serializeToBytes(JSONOutputFormats.CANONICALIZED));
-            byte[] dataToBeSigned = (jwsHeaderB64 + "." + payloadB64).getBytes("utf-8");
+            byte[] payload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Sign it using the provided algorithm and key
-            String signatureB64 = Base64URL.encode(secretKey == null ?
-                new SignatureWrapper(
-                    AsymSignatureAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE),
-                    privateKey)
-                        .update(dataToBeSigned).sign()
-                                                                     :
-                MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
-                        .digest(secretKey, dataToBeSigned));
-            privateKey = null;  // Nullify it after use
+            String jwsString = JOSESupport.createDetachedJwsSignature(jwsHeader, payload, keyHolder);
+            keyHolder = null;  // Nullify it after use
 
             // Create the completed object
             String signedJsonObject = new JSONObjectWriter(reader)
-                .setString(JSONCryptoHelper.SIGNATURE_JSON,
-                           jwsHeaderB64 + ".." + signatureB64)
+                .setString(RequestServlet.SIGNATURE_LABEL_JSON, jwsString)
                 .serializeToString(JSONOutputFormats.NORMALIZED);
-
+            
             // How things should appear in a "regular" JWS
-            if (JWSService.logging) {
-                logger.info(jwsHeaderB64 + '.' + payloadB64 + '.' + signatureB64);
+            if (JWSJCSService.logging) {
+                logger.info(jwsString.substring(0, jwsString.lastIndexOf('.')) +
+                            Base64URL.encode(payload) +
+                            jwsString.substring(jwsString.lastIndexOf('.')));
             }
 
             // The following is just for the demo.  That is, we want to preserve

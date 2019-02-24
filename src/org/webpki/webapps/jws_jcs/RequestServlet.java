@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 
-import java.security.KeyFactory;
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 
 import java.security.cert.X509Certificate;
 
 import java.security.interfaces.ECPublicKey;
-
-import java.security.spec.X509EncodedKeySpec;
 
 import java.util.Vector;
 
@@ -42,16 +40,18 @@ import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CertificateInfo;
 import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
-import org.webpki.crypto.SignatureWrapper;
+import org.webpki.crypto.SignatureAlgorithms;
 
-import org.webpki.json.JSONCryptoHelper;
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
+import org.webpki.jose.JOSEAsymSignatureValidator;
+import org.webpki.jose.JOSEHmacValidator;
+import org.webpki.jose.JOSESupport;
 
-import org.webpki.util.ArrayUtil;
 import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
+import org.webpki.util.PEMDecoder;
 
 public class RequestServlet extends HttpServlet {
 
@@ -64,6 +64,8 @@ public class RequestServlet extends HttpServlet {
 
     static final String JWS_VALIDATION_KEY = "vkey";
     
+    static final String SIGNATURE_LABEL_JSON = "signature";
+
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
@@ -95,12 +97,11 @@ public class RequestServlet extends HttpServlet {
             // Now begin the real work...
 
             // Get the embedded (detached) JWS signature
-            String jwsString = parsedObject.getString(JSONCryptoHelper.SIGNATURE_JSON);
+            String jwsString = parsedObject.getString(SIGNATURE_LABEL_JSON);
             
             // Get the actual JSON data bytes and remove the signature
-            byte[] jsonData = parsedObject.removeProperty(JSONCryptoHelper.SIGNATURE_JSON)
+            byte[] JWS_Payload = parsedObject.removeProperty(SIGNATURE_LABEL_JSON)
                     .serializeToBytes(JSONOutputFormats.CANONICALIZED);
-            String jsonDataB64 = Base64URL.encode(jsonData);
 
             // Extract the JWS header
             int endOfHeader = jwsString.indexOf('.');
@@ -108,34 +109,32 @@ public class RequestServlet extends HttpServlet {
             if (endOfHeader < 10 || 
                 endOfHeader != startOfSignature - 1 || 
                 startOfSignature > jwsString.length() - 10) {
-                throw new IOException("JWS syntax error");
+                throw new GeneralSecurityException("JWS syntax error");
             }
             
             // Parse it after the sanity test
             String jwsHeaderB64 = jwsString.substring(0, endOfHeader);
             JSONObjectReader jwsHeader = JSONParser.parse(Base64URL.decode(jwsHeaderB64));
-            byte[] signedData = (jwsHeaderB64 + "." + jsonDataB64).getBytes("utf-8");
             
             // Get the other component, the signature
-            byte[] signature = Base64URL.decode(jwsString.substring(startOfSignature + 1));
+            byte[] JWS_Signature = Base64URL.decode(jwsString.substring(startOfSignature + 1));
             
             // Start decoding the JWS header.  Algorithm is the minimum
-            String algorithm = jwsHeader.getString(JSONCryptoHelper.ALG_JSON);
+            SignatureAlgorithms algorithm = JOSESupport.getSignatureAlgorithm(jwsHeader);
 
             // We don't bother about any other header data than possible public key
             // elements modulo JKU and X5U
-            boolean macFlag = algorithm.startsWith("HS");
             PublicKey jwsSuppliedPublicKey = null;
             X509Certificate[] certificatePath = null;
-            if (jwsHeader.hasProperty(JSONCryptoHelper.JWK_JSON)) {
-                jwsSuppliedPublicKey = jwsHeader.getPublicKey();
+            if (jwsHeader.hasProperty(JOSESupport.JWK_JSON)) {
+                jwsSuppliedPublicKey = JOSESupport.getPublicKey(jwsHeader);
             }
             StringBuilder certificateData = null;
-            if (jwsHeader.hasProperty(JSONCryptoHelper.X5C_JSON)) {
+            if (jwsHeader.hasProperty(JOSESupport.X5C_JSON)) {
                 if (jwsSuppliedPublicKey != null) {
-                    throw new IOException("Both X5C and JWK?");
+                    throw new GeneralSecurityException("Both X5C and JWK?");
                 }
-                certificatePath = jwsHeader.getCertificatePath();
+                certificatePath = JOSESupport.getCertificatePath(jwsHeader);
                 jwsSuppliedPublicKey = certificatePath[0].getPublicKey();
                 for (X509Certificate certificate : certificatePath) {
                     if (certificateData == null) {
@@ -150,39 +149,32 @@ public class RequestServlet extends HttpServlet {
             }
             
             // Recreate the validation key and validate the signature
+            JOSESupport.CoreSignatureValidator validator;
             boolean jwkValidationKey = validationKey.startsWith("{");
-            if (macFlag) {
+            if (algorithm.isSymmetric()) {
                 if (jwsSuppliedPublicKey != null) {
-                    throw new IOException("Public key header elements in a HMAC signature?");
+                    throw new GeneralSecurityException("Public key header elements in a HMAC signature?");
                 }
-                if (!ArrayUtil.compare(MACAlgorithms.getAlgorithmFromId(algorithm, AlgorithmPreferences.JOSE)
-                        .digest(DebugFormatter.getByteArrayFromHex(validationKey), signedData), signature)) {
-                    throw new IOException("HMAC signature validation error");
-                }
+                validator = new JOSEHmacValidator(DebugFormatter.getByteArrayFromHex(validationKey),
+                                                  (MACAlgorithms) algorithm);
             } else {
-                PublicKey externalPublicKey =  jwkValidationKey ? 
+                AsymSignatureAlgorithms asymSigAlg = (AsymSignatureAlgorithms) algorithm;
+                PublicKey externalPublicKey = jwkValidationKey ? 
                     JSONParser.parse(validationKey).getCorePublicKey(AlgorithmPreferences.JOSE)
                                                                 :
-                    KeyFactory.getInstance(algorithm.startsWith("ES") ? "EC" : "RSA")
-                        .generatePublic(new X509EncodedKeySpec(CreateServlet.getPemBlob(validationKey,
-                                                                                        "PUBLIC KEY")));
-                AsymSignatureAlgorithms signatureAlgorithm = 
-                        AsymSignatureAlgorithms.getAlgorithmFromId(algorithm,
-                                                                   AlgorithmPreferences.JOSE);
+                    PEMDecoder.getPublicKey(validationKey.getBytes("utf-8"));
+
                 if (externalPublicKey instanceof ECPublicKey && 
                     KeyAlgorithms.getKeyAlgorithm(externalPublicKey)
-                        .getRecommendedSignatureAlgorithm() != signatureAlgorithm) {
-                    throw new IOException("EC key and algorithm does not match the JWS spec");
-                }
-                if (!new SignatureWrapper(signatureAlgorithm, externalPublicKey)
-                            .update(signedData)
-                            .verify(signature)) {
-                    throw new IOException("Asymmetric key signature validation error");
+                        .getRecommendedSignatureAlgorithm() != asymSigAlg) {
+                    throw new GeneralSecurityException("EC key and algorithm does not match the JWS spec");
                 }
                 if (jwsSuppliedPublicKey != null && !jwsSuppliedPublicKey.equals(externalPublicKey)) {
-                    throw new IOException("Supplied public key differs from the one derived from the JWS header");
+                    throw new GeneralSecurityException("Supplied public key differs from the one derived from the JWS header");
                 }
+                validator = new JOSEAsymSignatureValidator(externalPublicKey, asymSigAlg);
             }
+            JOSESupport.validateDetachedJwsSignature(jwsHeaderB64, JWS_Payload, JWS_Signature, validator);
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
@@ -195,13 +187,13 @@ public class RequestServlet extends HttpServlet {
                                               .serializeToString(JSONOutputFormats.PRETTY_HTML)
                                                        :
                                       HTML.encode(validationKey).replace("\n", "<br>"),
-                                      "Signature validation " + (macFlag ? 
+                                      "Signature validation " + (algorithm.isSymmetric() ? 
                                              "secret key in hexadecimal" :
                                              "public key in " + 
                                              (jwkValidationKey ? "JWK" : "PEM") +
                                              " format")))
                 .append(HTML.fancyBox("canonical", 
-                                      HTML.encode(new String(jsonData, "utf-8")),
+                                      HTML.encode(new String(JWS_Payload, "utf-8")),
                                       "Canonical version of the JSON data (with possible line breaks " +
                                       "for display purposes only)"));
             if (certificateData != null) {
@@ -210,7 +202,7 @@ public class RequestServlet extends HttpServlet {
                                           "Core certificate data"));
             }
             html.append(HTML.fancyBox("original", 
-                                      jwsHeaderB64 + '.' + jsonDataB64 + jwsString.substring(startOfSignature),
+                                      jwsHeaderB64 + '.' + Base64URL.encode(JWS_Payload) + jwsString.substring(startOfSignature),
                                       "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out

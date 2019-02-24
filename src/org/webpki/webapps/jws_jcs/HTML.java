@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class HTML {
 
     static void output(HttpServletResponse response, String html)
             throws IOException, ServletException {
-        if (JWSService.logging) {
+        if (JWSJCSService.logging) {
             logger.info(html);
         }
         response.setContentType("text/html; charset=utf-8");

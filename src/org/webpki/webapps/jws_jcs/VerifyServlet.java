@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ public class VerifyServlet extends HttpServlet {
             .append(HTML.fancyText(true,
                 VFY_SIGNED_DATA,
                 10, 
-                HTML.encode(JWSService.sampleSignature),
+                HTML.encode(JWSJCSService.sampleSignature),
                 "Paste a signed JSON object in the text box or try with the default"))
             .append(HTML.fancyText(true,
                 VFY_VALIDATION_KEY,
                 4, 
-                HTML.encode(JWSService.sampleKey),
+                HTML.encode(JWSJCSService.sampleKey),
                 "Validation key (secret key in hexadecimal or public key in PEM or &quot;plain&quot; JWK format)"))
             .append(
                 "<div style=\"display:flex;justify-content:center\">" +

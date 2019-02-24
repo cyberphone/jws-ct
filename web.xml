@@ -17,7 +17,7 @@
     </context-param>
 
     <listener>
-        <listener-class>org.webpki.webapps.jws_jcs.JWSService</listener-class>
+        <listener-class>org.webpki.webapps.jws_jcs.JWSJCSService</listener-class>
      </listener>
 
     <servlet>
