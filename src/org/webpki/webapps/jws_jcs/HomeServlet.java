@@ -68,9 +68,9 @@ public class HomeServlet extends HttpServlet {
             "Create JSON Signatures" +
             "</div></td></tr>" +
             "<tr><td><div class=\"multibtn\" " +
-            "onclick=\"document.location.href='verify'\" " +
-            "title=\"Verify JSON signatures\">" +
-            "Verify JSON Signatures" +
+            "onclick=\"document.location.href='validate'\" " +
+            "title=\"Validate JSON signatures\">" +
+            "Validate JSON Signatures" +
             "</div></td></tr>" +
             "<tr><td><div class=\"multibtn\" " +
             "onclick=\"document.location.href='webcrypto'\" " +

@@ -66,11 +66,14 @@ public class CreateServlet extends HttpServlet {
     static final String PRM_CERT_PATH    = "cert";
 
     static final String PRM_ALGORITHM    = "alg";
+    static final String PRM_SIG_LABEL    = "siglbl";
+
     static final String FLG_CERT_PATH    = "cerflg";
     static final String FLG_JAVASCRIPT   = "jsflg";
     static final String FLG_JWK_INLINE   = "jwkflg";
     
     static final String DEFAULT_ALG      = "ES256";
+    static final String DEFAULT_SIG_LBL  = "signature";
     
     class SelectAlg {
 
@@ -157,6 +160,11 @@ public class CreateServlet extends HttpServlet {
             .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", false, "certFlagChange(this.checked)"))
             .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)", false, null))
             .append(
+                "<div style=\"display:flex;align-items:center\">" +
+                "<input type=\"text\" name=\"" + PRM_SIG_LABEL + "\" id=\"" + PRM_SIG_LABEL + "\" " +
+                "style=\"padding:0 3pt;width:7em;font-family:monospace\" " +
+                "maxlength=\"100\" value=\"" + DEFAULT_SIG_LBL + "\">" +
+                "<div style=\"display:inline-block\">&nbsp;Signature label</div></div>" +
                 "</div>" +
                 "</div>" +
                 "<div style=\"display:flex;justify-content:center\">" +
@@ -257,6 +265,7 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + FLG_CERT_PATH + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
+            "  document.getElementById('" + PRM_SIG_LABEL + "').value = '" + DEFAULT_SIG_LBL + "';\n" +
             "  setUserData(true);\n" +
             "}\n" +
             "function algChange(alg) {\n" +
@@ -310,6 +319,7 @@ public class CreateServlet extends HttpServlet {
          try {
             request.setCharacterEncoding("utf-8");
             String jsonData = getTextArea(request, PRM_JSON_DATA);
+            String signatureLabel = getParameter(request, PRM_SIG_LABEL);
             JSONObjectReader reader = JSONParser.parse(jsonData);
             if (reader.getJSONArrayReader() != null) {
                 throw new IOException("The demo does not support signed arrays");
@@ -367,12 +377,12 @@ public class CreateServlet extends HttpServlet {
             byte[] payload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Sign it using the provided algorithm and key
-            String jwsString = JOSESupport.createDetachedJwsSignature(jwsHeader, payload, keyHolder);
+            String jwsString = JOSESupport.createJwsSignature(jwsHeader, payload, keyHolder, true);
             keyHolder = null;  // Nullify it after use
 
             // Create the completed object
             String signedJsonObject = new JSONObjectWriter(reader)
-                .setString(RequestServlet.SIGNATURE_LABEL_JSON, jwsString)
+                .setString(signatureLabel, jwsString)
                 .serializeToString(JSONOutputFormats.NORMALIZED);
             
             // How things should appear in a "regular" JWS
@@ -384,7 +394,7 @@ public class CreateServlet extends HttpServlet {
 
             // The following is just for the demo.  That is, we want to preserve
             // the original ("untouched") JSON data for educational purposes.
-            int i = signedJsonObject.lastIndexOf("\"sig");
+            int i = signedJsonObject.lastIndexOf("\"" + signatureLabel);
             if (signedJsonObject.charAt(i - 1) == ',') {
                 i--;
             }
@@ -393,15 +403,19 @@ public class CreateServlet extends HttpServlet {
                     signedJsonObject.substring(i, signedJsonObject.length() - 1) +
                     jsonData.substring(j);
 
-            // We terminate by verifying the signature as well
-            request.getRequestDispatcher((jsFlag ? "jssignature?" : "request?") +
-                RequestServlet.JWS_OBJECT + 
+            // We terminate by validating the signature as well
+            request.getRequestDispatcher((jsFlag ? "jssignature?" : "validate?") +
+                ValidateServlet.JWS_OBJECT + 
                 "=" +
                 URLEncoder.encode(signedJsonObject, "utf-8") +
                 "&" +
-                RequestServlet.JWS_VALIDATION_KEY + 
+                ValidateServlet.JWS_VALIDATION_KEY + 
                 "=" +
-                URLEncoder.encode(validationKey, "utf-8"))
+                URLEncoder.encode(validationKey, "utf-8") +
+                "&" +
+                ValidateServlet.JWS_SIGN_LABL + 
+                "=" +
+                URLEncoder.encode(signatureLabel, "utf-8"))
                     .forward(request, response);
         } catch (Exception e) {
             HTML.errorPage(response, e);

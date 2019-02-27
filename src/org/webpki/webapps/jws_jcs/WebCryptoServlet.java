@@ -39,13 +39,16 @@ public class WebCryptoServlet extends HttpServlet {
             throws IOException, ServletException {
 
         StringBuilder html = new StringBuilder(
-                "<form name=\"shoot\" method=\"POST\" action=\"request\">" +
+                "<form name=\"shoot\" method=\"POST\" action=\"validate\">" +
                 "<input type=\"hidden\" " + 
-                "id=\"" + RequestServlet.JWS_OBJECT + "\" " +
-                "name=\"" + RequestServlet.JWS_OBJECT + "\">" +
+                "id=\"" + ValidateServlet.JWS_OBJECT + "\" " +
+                "name=\"" + ValidateServlet.JWS_OBJECT + "\">" +
                 "<input type=\"hidden\" " +
-                "id=\"" + RequestServlet.JWS_VALIDATION_KEY + "\" " +
-                "name=\"" + RequestServlet.JWS_VALIDATION_KEY + "\">" +
+                "id=\"" + ValidateServlet.JWS_VALIDATION_KEY + "\" " +
+                "name=\"" + ValidateServlet.JWS_VALIDATION_KEY + "\">" +
+                "<input type=\"hidden\" " +
+                "name=\"" + ValidateServlet.JWS_SIGN_LABL + "\" " +
+                "value=\"" + CreateServlet.DEFAULT_SIG_LBL + "\">" +
                 "</form>" +
                 "<div class=\"header\">WebCrypto / JWS-JCS Demo</div>" +
                 "<div style=\"display:flex;justify-content:center;padding-top:15pt\"><div>" +
@@ -226,7 +229,7 @@ public class WebCryptoServlet extends HttpServlet {
                 "      return;\n" + 
                 "    }\n" + 
                 "    if (jsonObject." + 
-                RequestServlet.SIGNATURE_LABEL_JSON + 
+                CreateServlet.DEFAULT_SIG_LBL + 
                 ") {\n" + 
                 "      bad('sign.res', 'Object is already signed');\n" + 
                 "      return;\n" + 
@@ -264,17 +267,17 @@ public class WebCryptoServlet extends HttpServlet {
                         ")).then(function(signature) {\n" + 
                 "    console.log('Sign with RSASSA-PKCS1-v1_5 - SHA-256: PASS');\n" + 
                 "    document.getElementById('" + 
-                   RequestServlet.JWS_VALIDATION_KEY + 
+                   ValidateServlet.JWS_VALIDATION_KEY + 
                 "').value = JSON.stringify(publicKeyObject);\n" +
                 "    jsonObject." + 
-                RequestServlet.SIGNATURE_LABEL_JSON + 
+                CreateServlet.DEFAULT_SIG_LBL + 
                 " = jwsHeaderB64 + '..' + convertToBase64URL(new Uint8Array(signature));\n" + 
-                "    document.getElementById('" + RequestServlet.JWS_OBJECT +
+                "    document.getElementById('" + ValidateServlet.JWS_OBJECT +
                 "').value = JSON.stringify(jsonObject);\n" +
                 "    document.getElementById('sign.res').innerHTML = fancyJSONBox('Signed data in JWS-JCS format', jsonObject) + '" + 
                 "<div style=\"display:flex;justify-content:center\">" +
                 "<div class=\"stdbtn\" onclick=\"verifySignatureOnServer()\">" +
-                "Verify Signature (on the server)" +
+                "Validate Signature (on the server)" +
                 "</div>" +
                 "</div>';\n" + 
                 "  }).then(undefined, function() {\n" + 

@@ -23,8 +23,6 @@ import java.security.PublicKey;
 
 import java.security.cert.X509Certificate;
 
-import java.security.interfaces.ECPublicKey;
-
 import java.util.Vector;
 
 import java.util.logging.Logger;
@@ -38,13 +36,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.CertificateInfo;
-import org.webpki.crypto.KeyAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
+
 import org.webpki.jose.JOSEAsymSignatureValidator;
 import org.webpki.jose.JOSEHmacValidator;
 import org.webpki.jose.JOSESupport;
@@ -53,20 +51,19 @@ import org.webpki.util.Base64URL;
 import org.webpki.util.DebugFormatter;
 import org.webpki.util.PEMDecoder;
 
-public class RequestServlet extends HttpServlet {
+public class ValidateServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    static Logger logger = Logger.getLogger(RequestServlet.class.getName());
+    static Logger logger = Logger.getLogger(ValidateServlet.class.getName());
 
     // HTML form arguments
     static final String JWS_OBJECT         = "jws";
 
     static final String JWS_VALIDATION_KEY = "vkey";
     
-    static final String SIGNATURE_LABEL_JSON = "signature";
-
-
+    static final String JWS_SIGN_LABL      = "siglbl";
+    
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         try {
@@ -78,29 +75,36 @@ public class RequestServlet extends HttpServlet {
             // Get the two input data items
             String signedJsonObject = CreateServlet.getParameter(request, JWS_OBJECT);
             String validationKey = CreateServlet.getParameter(request, JWS_VALIDATION_KEY);
+            String signatureLabel = CreateServlet.getParameter(request, JWS_SIGN_LABL);
 
             // Parse the JSON data
             JSONObjectReader parsedObject = JSONParser.parse(signedJsonObject);
             
             // Create a pretty-printed JSON object without canonicalization
-            String prettySignature = parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
-            Vector<String> tokens = new JSONTokenExtractor().getTokens(signedJsonObject);
+            String prettySignature = 
+                    parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
+            Vector<String> tokens = 
+                    new JSONTokenExtractor().getTokens(signedJsonObject);
             int fromIndex = 0;
             for (String token : tokens) {
                 int start = prettySignature.indexOf("<span ", fromIndex);
                 int stop = prettySignature.indexOf("</span>", start);
                 // <span style="color:#C00000">
-                prettySignature = prettySignature.substring(0, start + 28) + token + prettySignature.substring(stop);
+                prettySignature = 
+                        prettySignature.substring(0, 
+                                                  start + 28) + 
+                                                     token + 
+                                                     prettySignature.substring(stop);
                 fromIndex = start + 1;
             }
             
             // Now begin the real work...
 
             // Get the embedded (detached) JWS signature
-            String jwsString = parsedObject.getString(SIGNATURE_LABEL_JSON);
+            String jwsString = parsedObject.getString(signatureLabel);
             
             // Get the actual JSON data bytes and remove the signature
-            byte[] JWS_Payload = parsedObject.removeProperty(SIGNATURE_LABEL_JSON)
+            byte[] JWS_Payload = parsedObject.removeProperty(signatureLabel)
                     .serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Extract the JWS header
@@ -114,27 +118,30 @@ public class RequestServlet extends HttpServlet {
             
             // Parse it after the sanity test
             String jwsHeaderB64 = jwsString.substring(0, endOfHeader);
-            JSONObjectReader jwsHeader = JSONParser.parse(Base64URL.decode(jwsHeaderB64));
+            JSONObjectReader JWS_Protected_Header = 
+                    JSONParser.parse(Base64URL.decode(jwsHeaderB64));
             
             // Get the other component, the signature
-            byte[] JWS_Signature = Base64URL.decode(jwsString.substring(startOfSignature + 1));
+            byte[] JWS_Signature = 
+                    Base64URL.decode(jwsString.substring(startOfSignature + 1));
             
             // Start decoding the JWS header.  Algorithm is the minimum
-            SignatureAlgorithms algorithm = JOSESupport.getSignatureAlgorithm(jwsHeader);
+            SignatureAlgorithms algorithm = 
+                    JOSESupport.getSignatureAlgorithm(JWS_Protected_Header);
 
             // We don't bother about any other header data than possible public key
             // elements modulo JKU and X5U
             PublicKey jwsSuppliedPublicKey = null;
             X509Certificate[] certificatePath = null;
-            if (jwsHeader.hasProperty(JOSESupport.JWK_JSON)) {
-                jwsSuppliedPublicKey = JOSESupport.getPublicKey(jwsHeader);
+            if (JWS_Protected_Header.hasProperty(JOSESupport.JWK_JSON)) {
+                jwsSuppliedPublicKey = JOSESupport.getPublicKey(JWS_Protected_Header);
             }
             StringBuilder certificateData = null;
-            if (jwsHeader.hasProperty(JOSESupport.X5C_JSON)) {
+            if (JWS_Protected_Header.hasProperty(JOSESupport.X5C_JSON)) {
                 if (jwsSuppliedPublicKey != null) {
                     throw new GeneralSecurityException("Both X5C and JWK?");
                 }
-                certificatePath = JOSESupport.getCertificatePath(jwsHeader);
+                certificatePath = JOSESupport.getCertificatePath(JWS_Protected_Header);
                 jwsSuppliedPublicKey = certificatePath[0].getPublicKey();
                 for (X509Certificate certificate : certificatePath) {
                     if (certificateData == null) {
@@ -155,7 +162,8 @@ public class RequestServlet extends HttpServlet {
                 if (jwsSuppliedPublicKey != null) {
                     throw new GeneralSecurityException("Public key header elements in a HMAC signature?");
                 }
-                validator = new JOSEHmacValidator(DebugFormatter.getByteArrayFromHex(validationKey),
+                validator = 
+                        new JOSEHmacValidator(DebugFormatter.getByteArrayFromHex(validationKey),
                                                   (MACAlgorithms) algorithm);
             } else {
                 AsymSignatureAlgorithms asymSigAlg = (AsymSignatureAlgorithms) algorithm;
@@ -164,22 +172,17 @@ public class RequestServlet extends HttpServlet {
                                                                 :
                     PEMDecoder.getPublicKey(validationKey.getBytes("utf-8"));
 
-                if (externalPublicKey instanceof ECPublicKey && 
-                    KeyAlgorithms.getKeyAlgorithm(externalPublicKey)
-                        .getRecommendedSignatureAlgorithm() != asymSigAlg) {
-                    throw new GeneralSecurityException("EC key and algorithm does not match the JWS spec");
-                }
                 if (jwsSuppliedPublicKey != null && !jwsSuppliedPublicKey.equals(externalPublicKey)) {
                     throw new GeneralSecurityException("Supplied public key differs from the one derived from the JWS header");
                 }
                 validator = new JOSEAsymSignatureValidator(externalPublicKey, asymSigAlg);
             }
-            JOSESupport.validateDetachedJwsSignature(jwsHeaderB64, JWS_Payload, JWS_Signature, validator);
+            JOSESupport.validateJwsSignature(jwsHeaderB64, JWS_Payload, JWS_Signature, validator);
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
                 .append(HTML.fancyBox("header", 
-                                      jwsHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
+                                      JWS_Protected_Header.serializeToString(JSONOutputFormats.PRETTY_HTML),
                                       "Decoded JWS header"))
                 .append(HTML.fancyBox("vkey",
                                       jwkValidationKey ? 
@@ -202,13 +205,46 @@ public class RequestServlet extends HttpServlet {
                                           "Core certificate data"));
             }
             html.append(HTML.fancyBox("original", 
-                                      jwsHeaderB64 + '.' + Base64URL.encode(JWS_Payload) + jwsString.substring(startOfSignature),
-                                      "Finally (as a reference only...), the same object expressed as a standard JWS"));
+                                      jwsHeaderB64 + '.' +
+                                      Base64URL.encode(JWS_Payload) + 
+                                      jwsString.substring(startOfSignature),
+          "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
             HTML.standardPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
         } catch (Exception e) {
             HTML.errorPage(response, e);
         }
+    }
+
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+
+        HTML.standardPage(response, null, new StringBuilder(
+                "<form name=\"shoot\" method=\"POST\" action=\"validate\">" +
+                "<div class=\"header\">Testing JSON Signatures</div>")
+            .append(HTML.fancyText(true,
+                JWS_OBJECT,
+                10, 
+                HTML.encode(JWSJCSService.sampleSignature),
+                "Paste a signed JSON object in the text box or try with the default"))
+            .append(HTML.fancyText(true,
+                JWS_VALIDATION_KEY,
+                4, 
+                HTML.encode(JWSJCSService.sampleKey),
+"Validation key (secret key in hexadecimal or public key in PEM or &quot;plain&quot; JWK format)"))
+            .append(HTML.fancyText(true,
+                JWS_SIGN_LABL,
+                1, 
+                HTML.encode(CreateServlet.DEFAULT_SIG_LBL),
+                "Anticipated signature label"))
+            .append(
+                "<div style=\"display:flex;justify-content:center\">" +
+                "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
+                "Validate JSON Signature" +
+                "</div>" +
+                "</div>" +
+                "</form>" +
+                "<div>&nbsp;</div>"));
     }
 }

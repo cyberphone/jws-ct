@@ -16,9 +16,7 @@
  */
 package org.webpki.webapps.jws_jcs;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import java.util.logging.Logger;
 
@@ -168,25 +166,24 @@ public class HTML {
 
     public static void errorPage(HttpServletResponse response, Exception e)
             throws IOException, ServletException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter printerWriter = new PrintWriter(baos);
-        e.printStackTrace(printerWriter);
-        printerWriter.flush();
-        String stackTrace = baos.toString("utf-8");
-        StringBuilder error = new StringBuilder(e.getMessage())
-            .append("\nStack trace:\n");
-        int begin = 0;
-        for (int q = 0; q < 20; q++) {
-            int end = stackTrace.indexOf('\n', begin);
-            if (end < 0) break;
-            error.append(stackTrace.substring(begin, begin = ++end));
+        StringBuffer error = new StringBuffer("Stack trace:\n")
+            .append(e.getClass().getName())
+            .append(": ")
+            .append(e.getMessage());
+        StackTraceElement[] st = e.getStackTrace();
+        int length = st.length;
+        if (length > 20) {
+            length = 20;
+        }
+        for (int i = 0; i < length; i++) {
+            error.append("\n  at " + st[i].toString());
         }
         standardPage(response,
                      null,
                      new StringBuilder(
             "<div class=\"header\" style=\"color:red\">Something went wrong...</div>" +
-            "<div>")
-        .append(encode(error.toString()).replace("\n", "<br>"))
-        .append("</div>"));
+            "<div><pre>")
+        .append(encode(error.toString()))
+        .append("</pre></div>"));
     }
 }
