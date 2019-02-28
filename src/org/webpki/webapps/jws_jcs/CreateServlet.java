@@ -38,6 +38,7 @@ import org.webpki.crypto.SignatureAlgorithms;
 import org.webpki.jose.JOSEAsymKeyHolder;
 import org.webpki.jose.JOSESupport;
 import org.webpki.jose.JOSESymKeyHolder;
+
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
@@ -329,14 +330,14 @@ public class CreateServlet extends HttpServlet {
             boolean keyInlining = request.getParameter(FLG_JWK_INLINE) != null;
             boolean certOption = request.getParameter(FLG_CERT_PATH) != null;
             String algorithm = getParameter(request, PRM_ALGORITHM);
-            JSONObjectWriter jwsHeader = new JSONObjectWriter();
+            JSONObjectWriter JWS_Protected_Header = new JSONObjectWriter();
 
             // Create the minimal JWS header
-            jwsHeader.setString(JOSESupport.ALG_JSON, algorithm);
+            JWS_Protected_Header.setString(JOSESupport.ALG_JSON, algorithm);
 
             // Add any optional (by the user specified) arguments
             for (String key : additionalHeaderData.getProperties()) {
-                jwsHeader.copyElement(key, key, additionalHeaderData);
+                JWS_Protected_Header.copyElement(key, key, additionalHeaderData);
             }
             
             // Get the signature key
@@ -364,20 +365,23 @@ public class CreateServlet extends HttpServlet {
 
                 // Add other JWS header data that the demo program fixes 
                 if (certOption) {
-                    JOSESupport.setCertificatePath(jwsHeader,
+                    JOSESupport.setCertificatePath(JWS_Protected_Header,
                             PEMDecoder.getCertificatePath(getBinaryParameter(request,
                                                                              PRM_CERT_PATH)));
                 } else if (keyInlining) {
-                    JOSESupport.setPublicKey(jwsHeader, keyPair.getPublic());
+                    JOSESupport.setPublicKey(JWS_Protected_Header, keyPair.getPublic());
                 }
                 keyHolder = new JOSEAsymKeyHolder(keyPair.getPrivate());
             }
 
             // Creating JWS data to be signed
-            byte[] payload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
+            byte[] JWS_Payload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Sign it using the provided algorithm and key
-            String jwsString = JOSESupport.createJwsSignature(jwsHeader, payload, keyHolder, true);
+            String jwsString = JOSESupport.createJwsSignature(JWS_Protected_Header, 
+            		                                          JWS_Payload,
+            		                                          keyHolder, 
+            		                                          true);
             keyHolder = null;  // Nullify it after use
 
             // Create the completed object
@@ -388,7 +392,7 @@ public class CreateServlet extends HttpServlet {
             // How things should appear in a "regular" JWS
             if (JWSJCSService.logging) {
                 logger.info(jwsString.substring(0, jwsString.lastIndexOf('.')) +
-                            Base64URL.encode(payload) +
+                            Base64URL.encode(JWS_Payload) +
                             jwsString.substring(jwsString.lastIndexOf('.')));
             }
 
