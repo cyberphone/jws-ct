@@ -82,8 +82,8 @@ public class HTML {
             " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/>" +
             "<div style=\"display:flex;padding-bottom:10pt\">" +
             "<a href=\"https://github.com/cyberphone/jws-jcs\" target=\"_blank\"><img src=\"images/jws-jcs.svg\" " +
-            "style=\"height:20pt\"" +
-             "title=\"Specifications, source code, etc.\"/></a>" +
+            "style=\"height:20pt\" " +
+            "title=\"Specifications, source code, etc.\"/></a>" +
             "</div>" +
             "</div>")
          .append(box).append("</body></html>");
