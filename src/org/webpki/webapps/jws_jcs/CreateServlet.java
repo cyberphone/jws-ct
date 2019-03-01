@@ -325,15 +325,17 @@ public class CreateServlet extends HttpServlet {
             if (reader.getJSONArrayReader() != null) {
                 throw new IOException("The demo does not support signed arrays");
             }
-            JSONObjectReader additionalHeaderData = JSONParser.parse(getParameter(request, PRM_JWS_EXTRA));
+            JSONObjectReader additionalHeaderData = 
+                    JSONParser.parse(getParameter(request, PRM_JWS_EXTRA));
             boolean jsFlag = request.getParameter(FLG_JAVASCRIPT) != null;
             boolean keyInlining = request.getParameter(FLG_JWK_INLINE) != null;
             boolean certOption = request.getParameter(FLG_CERT_PATH) != null;
-            String algorithm = getParameter(request, PRM_ALGORITHM);
-            JSONObjectWriter JWS_Protected_Header = new JSONObjectWriter();
+            SignatureAlgorithms algorithm = 
+                    JOSESupport.getSignatureAlgorithm(getParameter(request, PRM_ALGORITHM));
 
             // Create the minimal JWS header
-            JWS_Protected_Header.setString(JOSESupport.ALG_JSON, algorithm);
+            JSONObjectWriter JWS_Protected_Header = 
+                    JOSESupport.setSignatureAlgorithm(new JSONObjectWriter(), algorithm);
 
             // Add any optional (by the user specified) arguments
             for (String key : additionalHeaderData.getProperties()) {
@@ -345,7 +347,7 @@ public class CreateServlet extends HttpServlet {
             String validationKey;
             
             // Symmetric or asymmetric?
-            if (algorithm.startsWith("HS")) {
+            if (algorithm.isSymmetric()) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
                 keyHolder = new JOSESymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey));
             } else {
@@ -379,9 +381,9 @@ public class CreateServlet extends HttpServlet {
 
             // Sign it using the provided algorithm and key
             String jwsString = JOSESupport.createJwsSignature(JWS_Protected_Header, 
-            		                                          JWS_Payload,
-            		                                          keyHolder, 
-            		                                          true);
+                                                              JWS_Payload,
+                                                              keyHolder, 
+                                                              true);
             keyHolder = null;  // Nullify it after use
 
             // Create the completed object
