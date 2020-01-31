@@ -16,7 +16,7 @@
   
   <property name="keypassword" value="foo123"/>
   <property name="keyfilext" value=".p12"/>
-  <property name="key.dir" location="${openkeystore.dir}/json/keys"/>
+  <property name="key.dir" location="${openkeystore.dir}/jsf-web-lab/keys"/>
   <property name="webpki.lib.dir" location="${openkeystore.dir}/library/dist"/>
   <property name="third.party.lib.dir" location="${openkeystore.dir}/resources/third-party-jars"/>
   
