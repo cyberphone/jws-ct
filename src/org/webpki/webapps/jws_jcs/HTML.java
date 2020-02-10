@@ -166,7 +166,7 @@ public class HTML {
 
     public static void errorPage(HttpServletResponse response, Exception e)
             throws IOException, ServletException {
-        StringBuffer error = new StringBuffer("Stack trace:\n")
+        StringBuilder error = new StringBuilder("Stack trace:\n")
             .append(e.getClass().getName())
             .append(": ")
             .append(e.getMessage());
@@ -176,7 +176,11 @@ public class HTML {
             length = 20;
         }
         for (int i = 0; i < length; i++) {
-            error.append("\n  at " + st[i].toString());
+            String entry = st[i].toString();
+            if (entry.contains(".HttpServlet")) {
+                break;
+            }
+            error.append("\n  at " + entry);
         }
         standardPage(response,
                      null,
