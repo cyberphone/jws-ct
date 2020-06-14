@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
+ *  Copyright 2006-2020 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,9 +77,9 @@ public class HTML {
         }
         html.append("</head><body>" +
             "<div style=\"display:flex;flex-wrap:wrap-reverse;justify-content:space-between\">" +
-            "<img src=\"thelab.svg\" " +
+            "<div><img src=\"thelab.svg\" " +
             "style=\"cursor:pointer;height:25pt;padding-bottom:10pt;margin-right:30pt\"" +
-            " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/>" +
+            " onclick=\"document.location.href='home'\" title=\"Home of the lab...\"/></div>" +
             "<div style=\"display:flex;padding-bottom:10pt\">" +
             "<a href=\"https://github.com/cyberphone/jws-jcs\" target=\"_blank\"><img src=\"jws-jcs.svg\" " +
             "style=\"height:20pt\" " +
