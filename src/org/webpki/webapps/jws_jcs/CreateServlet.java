@@ -357,13 +357,16 @@ public class CreateServlet extends HttpServlet {
                 KeyPair keyPair;
                 if (privateKeyBlob[0] == '{') {
                     keyPair = JSONParser.parse(privateKeyBlob).getKeyPair();
+                    validationKey = 
+                            JSONObjectWriter.createCorePublicKey(keyPair.getPublic(),
+                                                                 AlgorithmPreferences.JOSE).toString();
                  } else {
                     keyPair = PEMDecoder.getKeyPair(privateKeyBlob);
+                    validationKey = "-----BEGIN PUBLIC KEY-----\n" +
+                            new Base64().getBase64StringFromBinary(keyPair.getPublic().getEncoded()) +
+                            "\n-----END PUBLIC KEY-----";
                 }
                 privateKeyBlob = null;  // Nullify it after use
-                validationKey = "-----BEGIN PUBLIC KEY-----\n" +
-                                new Base64().getBase64StringFromBinary(keyPair.getPublic().getEncoded()) +
-                                "\n-----END PUBLIC KEY-----";
 
                 // Add other JWS header data that the demo program fixes 
                 if (certOption) {
