@@ -55,7 +55,7 @@ demo is currently available at: https://mobilepki.org/jws-jcs/home
 ### Detailed Signing Operation
 1. Create or parse the JSON data to be signed using *existing* JSON tools
 2. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-02#section-3.2 on the created data
+ https://tools.ietf.org/html/rfc8785#section-3.2 on the created data
 3. Use the result of the previous step as "JWS Payload" to the JWS signature process described in
 https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization mode
 4. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
@@ -66,7 +66,7 @@ https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization
 2. Read and save the JWS string from the *designated signature property*
 3. Remove the *designated signature property* from the parsed JSON data
 4. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/draft-rundgren-json-canonicalization-scheme-02#section-3.2 on the remaining data
+ https://tools.ietf.org/html/rfc8785#section-3.2 on the remaining data
 5. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
 https://tools.ietf.org/html/rfc7515#appendix-F
 
