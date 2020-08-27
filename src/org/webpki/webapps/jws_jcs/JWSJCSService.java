@@ -19,6 +19,8 @@ package org.webpki.webapps.jws_jcs;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.security.PrivateKey;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +32,15 @@ import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
+import org.webpki.jose.JOSEAsymKeyHolder;
+import org.webpki.jose.JOSESupport;
+
+import org.webpki.json.JSONObjectWriter;
+import org.webpki.json.JSONOutputFormats;
+import org.webpki.json.JSONParser;
+
 import org.webpki.util.ArrayUtil;
+import org.webpki.util.PEMDecoder;
 
 import org.webpki.webutil.InitPropertyReader;
 
@@ -40,7 +50,7 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
 
     static String sampleSignature;
     
-    static String sampleKey;
+    static String samplePublicKey;
     
     static String keyDeclarations;
     
@@ -96,16 +106,16 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
         }
     }
 
-    InputStream getResource(String name) throws IOException {
+    byte[] getEmbeddedResource(String name) throws IOException {
         InputStream is = this.getClass().getResourceAsStream(name);
         if (is == null) {
             throw new IOException("Resource fail for: " + name);
         }
-        return is;
+        return ArrayUtil.getByteArrayFromInputStream(is);
     }
     
     String getEmbeddedResourceString(String name) throws IOException {
-        return new String(ArrayUtil.getByteArrayFromInputStream(getResource(name)), "utf-8");
+        return new String(getEmbeddedResource(name), "utf-8");
     }
 
     @Override
@@ -116,12 +126,6 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
     public void contextInitialized(ServletContextEvent event) {
         initProperties(event);
         try {
-            /////////////////////////////////////////////////////////////////////////////////////////////
-            // Sample signature for verification
-            /////////////////////////////////////////////////////////////////////////////////////////////
-            sampleSignature = getEmbeddedResourceString("sample-signature.json");
-            sampleKey = getEmbeddedResourceString("p256publickey.pem").trim();
-
             /////////////////////////////////////////////////////////////////////////////////////////////
             // Keys
             /////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +149,29 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
                           .addKey(MACAlgorithms.HMAC_SHA384,            "a384")
                           .addKey(MACAlgorithms.HMAC_SHA512,            "a512").toString();
 
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            // Sample signature for verification
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            String sampleDataToSign = getEmbeddedResourceString("sample-data-to-sign.json");
+            PrivateKey samplePrivateKey = 
+                    PEMDecoder.getPrivateKey(getEmbeddedResource("p256privatekey.pem"));
+            String jwsString = 
+                    JOSESupport.createJwsSignature(
+                            new JSONObjectWriter()
+                                .setString(JOSESupport.ALG_JSON,
+                                    AsymSignatureAlgorithms.ECDSA_SHA256.getJoseAlgorithmId()), 
+                            JSONParser.parse(sampleDataToSign)
+                                .serializeToBytes(JSONOutputFormats.CANONICALIZED),
+                            new JOSEAsymKeyHolder(samplePrivateKey), 
+                            true);
+            String signature = 
+                    new JSONObjectWriter()
+                        .setString(CreateServlet.DEFAULT_SIG_LBL, 
+                                   jwsString).serializeToString(JSONOutputFormats.PRETTY_PRINT);
+            sampleSignature = sampleDataToSign.substring(0, sampleDataToSign.lastIndexOf('}')) +
+                              "," +
+                              signature.substring(signature.indexOf("\n "));
+            samplePublicKey = getEmbeddedResourceString("p256publickey.pem").trim();
             /////////////////////////////////////////////////////////////////////////////////////////////
             // Logging?
             /////////////////////////////////////////////////////////////////////////////////////////////

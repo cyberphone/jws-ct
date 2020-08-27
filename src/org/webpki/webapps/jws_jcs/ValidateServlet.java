@@ -231,7 +231,7 @@ public class ValidateServlet extends HttpServlet {
             .append(HTML.fancyText(true,
                 JWS_VALIDATION_KEY,
                 4, 
-                HTML.encode(JWSJCSService.sampleKey),
+                HTML.encode(JWSJCSService.samplePublicKey),
 "Validation key (secret key in hexadecimal or public key in PEM or &quot;plain&quot; JWK format)"))
             .append(HTML.fancyText(true,
                 JWS_SIGN_LABL,
