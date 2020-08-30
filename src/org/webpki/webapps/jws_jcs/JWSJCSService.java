@@ -175,12 +175,11 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
                     PEMDecoder.getPrivateKey(getEmbeddedResource("p256privatekey.pem"));
             String jwsString = 
                     JOSESupport.createJwsSignature(
-                            new JSONObjectWriter()
-                                .setString(JOSESupport.ALG_JSON,
-                                    AsymSignatureAlgorithms.ECDSA_SHA256.getJoseAlgorithmId()), 
+                            null, 
                             JSONParser.parse(sampleDataToSign)
                                 .serializeToBytes(JSONOutputFormats.CANONICALIZED),
-                            new JOSEAsymKeyHolder(samplePrivateKey), 
+                            new JOSEAsymKeyHolder(samplePrivateKey),
+                            AsymSignatureAlgorithms.ECDSA_SHA256,
                             true);
             String signature = 
                     new JSONObjectWriter()

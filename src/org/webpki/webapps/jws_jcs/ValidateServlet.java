@@ -118,30 +118,39 @@ public class ValidateServlet extends HttpServlet {
             
             // Parse it after the sanity test
             String jwsHeaderB64 = jwsString.substring(0, endOfHeader);
-            JSONObjectReader JWS_Protected_Header = 
-                    JSONParser.parse(Base64URL.decode(jwsHeaderB64));
+            JSONObjectReader jwsProtectedHeader =  JSONParser.parse(Base64URL.decode(jwsHeaderB64));
             
             // Get the other component, the signature
-            byte[] JWS_Signature = 
-                    Base64URL.decode(jwsString.substring(startOfSignature + 1));
+            String jwsSignatureB64U = jwsString.substring(startOfSignature + 1);
             
             // Start decoding the JWS header.  Algorithm is the minimum
-            SignatureAlgorithms algorithm = 
-                    JOSESupport.getSignatureAlgorithm(JWS_Protected_Header);
+            String algorithmParam = jwsProtectedHeader.getString(JOSESupport.ALG_JSON);
+            SignatureAlgorithms signatureAlgorithm = null; 
+            if (algorithmParam.equals(JOSESupport.EdDSA)) {
+                signatureAlgorithm = jwsSignatureB64U.length() < 100 ? 
+                        AsymSignatureAlgorithms.ED25519 : AsymSignatureAlgorithms.ED448;
+            } else if (algorithmParam.startsWith("HS")) {
+                signatureAlgorithm = 
+                        MACAlgorithms.getAlgorithmFromId(algorithmParam,
+                                                         AlgorithmPreferences.JOSE);
+            } else {
+                signatureAlgorithm = 
+                        AsymSignatureAlgorithms.getAlgorithmFromId(algorithmParam, AlgorithmPreferences.JOSE);
+            }
 
             // We don't bother about any other header data than possible public key
             // elements modulo JKU and X5U
             PublicKey jwsSuppliedPublicKey = null;
             X509Certificate[] certificatePath = null;
-            if (JWS_Protected_Header.hasProperty(JOSESupport.JWK_JSON)) {
-                jwsSuppliedPublicKey = JOSESupport.getPublicKey(JWS_Protected_Header);
+            if (jwsProtectedHeader.hasProperty(JOSESupport.JWK_JSON)) {
+                jwsSuppliedPublicKey = JOSESupport.getPublicKey(jwsProtectedHeader);
             }
             StringBuilder certificateData = null;
-            if (JWS_Protected_Header.hasProperty(JOSESupport.X5C_JSON)) {
+            if (jwsProtectedHeader.hasProperty(JOSESupport.X5C_JSON)) {
                 if (jwsSuppliedPublicKey != null) {
                     throw new GeneralSecurityException("Both X5C and JWK?");
                 }
-                certificatePath = JOSESupport.getCertificatePath(JWS_Protected_Header);
+                certificatePath = JOSESupport.getCertificatePath(jwsProtectedHeader);
                 jwsSuppliedPublicKey = certificatePath[0].getPublicKey();
                 for (X509Certificate certificate : certificatePath) {
                     if (certificateData == null) {
@@ -158,15 +167,15 @@ public class ValidateServlet extends HttpServlet {
             // Recreate the validation key and validate the signature
             JOSESupport.CoreSignatureValidator validator;
             boolean jwkValidationKey = validationKey.startsWith("{");
-            if (algorithm.isSymmetric()) {
+            if (signatureAlgorithm.isSymmetric()) {
                 if (jwsSuppliedPublicKey != null) {
                     throw new GeneralSecurityException("Public key header elements in a HMAC signature?");
                 }
                 validator = 
                         new JOSEHmacValidator(DebugFormatter.getByteArrayFromHex(validationKey),
-                                                  (MACAlgorithms) algorithm);
+                                                  (MACAlgorithms) signatureAlgorithm);
             } else {
-                AsymSignatureAlgorithms asymSigAlg = (AsymSignatureAlgorithms) algorithm;
+                AsymSignatureAlgorithms asymSigAlg = (AsymSignatureAlgorithms) signatureAlgorithm;
                 PublicKey externalPublicKey = jwkValidationKey ? 
                     JSONParser.parse(validationKey).getCorePublicKey(AlgorithmPreferences.JOSE)
                                                                 :
@@ -177,12 +186,12 @@ public class ValidateServlet extends HttpServlet {
                 }
                 validator = new JOSEAsymSignatureValidator(externalPublicKey, asymSigAlg);
             }
-            JOSESupport.validateJwsSignature(jwsHeaderB64, JWS_Payload, JWS_Signature, validator);
+            JOSESupport.validateJwsSignature(jwsHeaderB64, JWS_Payload, jwsSignatureB64U, validator);
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
                 .append(HTML.fancyBox("header", 
-                                      JWS_Protected_Header.serializeToString(JSONOutputFormats.PRETTY_HTML),
+                                      jwsProtectedHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
                                       "Decoded JWS header"))
                 .append(HTML.fancyBox("vkey",
                                       jwkValidationKey ? 
@@ -190,7 +199,7 @@ public class ValidateServlet extends HttpServlet {
                                               .serializeToString(JSONOutputFormats.PRETTY_HTML)
                                                        :
                                       HTML.encode(validationKey).replace("\n", "<br>"),
-                                      "Signature validation " + (algorithm.isSymmetric() ? 
+                                      "Signature validation " + (signatureAlgorithm.isSymmetric() ? 
                                              "secret key in hexadecimal" :
                                              "public key in " + 
                                              (jwkValidationKey ? "JWK" : "PEM") +
