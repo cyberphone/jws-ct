@@ -81,8 +81,7 @@ public class ValidateServlet extends HttpServlet {
             JSONObjectReader parsedObject = JSONParser.parse(signedJsonObject);
             
             // Create a pretty-printed JSON object without canonicalization
-            String prettySignature = 
-                    parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
+            String prettySignature = parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
             Vector<String> tokens = 
                     new JSONTokenExtractor().getTokens(signedJsonObject);
             int fromIndex = 0;
@@ -90,11 +89,10 @@ public class ValidateServlet extends HttpServlet {
                 int start = prettySignature.indexOf("<span ", fromIndex);
                 int stop = prettySignature.indexOf("</span>", start);
                 // <span style="color:#C00000">
-                prettySignature = 
-                        prettySignature.substring(0, 
-                                                  start + 28) + 
-                                                     token + 
-                                                     prettySignature.substring(stop);
+                prettySignature = prettySignature.substring(0, 
+                                                            start + 28) + 
+                                                              token + 
+                                                              prettySignature.substring(stop);
                 fromIndex = start + 1;
             }
             
@@ -118,14 +116,16 @@ public class ValidateServlet extends HttpServlet {
             
             // Parse it after the sanity test
             String jwsHeaderB64 = jwsString.substring(0, endOfHeader);
-            JSONObjectReader jwsProtectedHeader =  JSONParser.parse(Base64URL.decode(jwsHeaderB64));
+            JSONObjectReader jwsProtectedHeader = JSONParser.parse(Base64URL.decode(jwsHeaderB64));
             
             // Get the other component, the signature
             String jwsSignatureB64U = jwsString.substring(startOfSignature + 1);
             
             // Start decoding the JWS header.  Algorithm is the minimum
             String algorithmParam = jwsProtectedHeader.getString(JOSESupport.ALG_JSON);
-            SignatureAlgorithms signatureAlgorithm = null; 
+            SignatureAlgorithms signatureAlgorithm;
+
+            // This is pretty ugly, two different conventions in the same standard!
             if (algorithmParam.equals(JOSESupport.EdDSA)) {
                 signatureAlgorithm = jwsSignatureB64U.length() < 100 ? 
                         AsymSignatureAlgorithms.ED25519 : AsymSignatureAlgorithms.ED448;
@@ -135,7 +135,8 @@ public class ValidateServlet extends HttpServlet {
                                                          AlgorithmPreferences.JOSE);
             } else {
                 signatureAlgorithm = 
-                        AsymSignatureAlgorithms.getAlgorithmFromId(algorithmParam, AlgorithmPreferences.JOSE);
+                        AsymSignatureAlgorithms.getAlgorithmFromId(algorithmParam, 
+                                                                   AlgorithmPreferences.JOSE);
             }
 
             // We don't bother about any other header data than possible public key
@@ -182,14 +183,17 @@ public class ValidateServlet extends HttpServlet {
                     PEMDecoder.getPublicKey(validationKey.getBytes("utf-8"));
 
                 if (jwsSuppliedPublicKey != null && !jwsSuppliedPublicKey.equals(externalPublicKey)) {
-                    throw new GeneralSecurityException("Supplied public key differs from the one derived from the JWS header");
+                    throw new GeneralSecurityException(
+                            "Supplied public key differs from the one derived from the JWS header");
                 }
                 validator = new JOSEAsymSignatureValidator(externalPublicKey, asymSigAlg);
             }
             JOSESupport.validateJwsSignature(jwsHeaderB64, JWS_Payload, jwsSignatureB64U, validator);
             StringBuilder html = new StringBuilder(
                     "<div class=\"header\"> Signature Successfully Validated</div>")
-                .append(HTML.fancyBox("signed", prettySignature, "JSON object signed by an embedded JWS element"))           
+                .append(HTML.fancyBox("signed", 
+                                      prettySignature, 
+                                      "JSON object signed by an embedded JWS element"))           
                 .append(HTML.fancyBox("header", 
                                       jwsProtectedHeader.serializeToString(JSONOutputFormats.PRETTY_HTML),
                                       "Decoded JWS header"))
@@ -207,7 +211,7 @@ public class ValidateServlet extends HttpServlet {
                 .append(HTML.fancyBox("canonical", 
                                       HTML.encode(new String(JWS_Payload, "utf-8")),
                                       "Canonical version of the JSON data (with possible line breaks " +
-                                      "for display purposes only)"));
+                                        "for display purposes only)"));
             if (certificateData != null) {
                 html.append(HTML.fancyBox("certpath", 
                                           certificateData.toString(),
@@ -241,7 +245,8 @@ public class ValidateServlet extends HttpServlet {
                 JWS_VALIDATION_KEY,
                 4, 
                 HTML.encode(JWSJCSService.samplePublicKey),
-"Validation key (secret key in hexadecimal or public key in PEM or &quot;plain&quot; JWK format)"))
+                            "Validation key (secret key in hexadecimal or public " +
+                              "key in PEM or &quot;plain&quot; JWK format)"))
             .append(HTML.fancyText(true,
                 JWS_SIGN_LABL,
                 1, 

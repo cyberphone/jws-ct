@@ -105,7 +105,8 @@ public class CreateServlet extends HttpServlet {
     }
     
     StringBuilder checkBox(String idName, String text, boolean checked, String onchange) {
-        StringBuilder html = new StringBuilder("<div style=\"display:flex;align-items:center\"><input type=\"checkbox\" id=\"")
+        StringBuilder html = new StringBuilder(
+                "<div style=\"display:flex;align-items:center\"><input type=\"checkbox\" id=\"")
             .append(idName)
             .append("\" name=\"")
             .append(idName)
@@ -159,9 +160,12 @@ public class CreateServlet extends HttpServlet {
             .append(
                 "<div style=\"display:inline-block;padding:0 10pt 0 5pt\">Algorithm</div>" +
                 "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Restore&nbsp;defaults</div></div>")
-            .append(checkBox(FLG_JWK_INLINE, "Automagically insert public key (JWK)", false, "jwkFlagChange(this.checked)"))
-            .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", false, "certFlagChange(this.checked)"))
-            .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)", false, null))
+            .append(checkBox(FLG_JWK_INLINE, "Automagically insert public key (JWK)",
+                             false, "jwkFlagChange(this.checked)"))
+            .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", 
+                             false, "certFlagChange(this.checked)"))
+            .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)",
+                             false, null))
             .append(
                 "<div style=\"display:flex;align-items:center\">" +
                 "<input type=\"text\" name=\"" + PRM_SIG_LABEL + "\" id=\"" + PRM_SIG_LABEL + "\" " +
@@ -332,6 +336,8 @@ public class CreateServlet extends HttpServlet {
             boolean jsFlag = request.getParameter(FLG_JAVASCRIPT) != null;
             boolean keyInlining = request.getParameter(FLG_JWK_INLINE) != null;
             boolean certOption = request.getParameter(FLG_CERT_PATH) != null;
+
+            // Get wanted signature algorithm
             String algorithmParam = getParameter(request, PRM_ALGORITHM);
             SignatureAlgorithms signatureAlgorithm = algorithmParam.startsWith("HS") ?
                     MACAlgorithms.getAlgorithmFromId(algorithmParam, 
