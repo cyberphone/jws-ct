@@ -190,7 +190,7 @@ public class ValidateServlet extends HttpServlet {
             }
             JOSESupport.validateJwsSignature(jwsHeaderB64, JWS_Payload, jwsSignatureB64U, validator);
             StringBuilder html = new StringBuilder(
-                    "<div class=\"header\"> Signature Successfully Validated</div>")
+                    "<div class='header'> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 
                                       prettySignature, 
                                       "JSON object signed by an embedded JWS element"))           
@@ -224,7 +224,7 @@ public class ValidateServlet extends HttpServlet {
           "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
-            HTML.standardPage(response, null, html.append("<div style=\"padding:10pt\"></div>"));
+            HTML.standardPage(response, null, html.append("<div style='padding:10pt'></div>"));
         } catch (Exception e) {
             HTML.errorPage(response, e);
         }
@@ -234,8 +234,8 @@ public class ValidateServlet extends HttpServlet {
             throws IOException, ServletException {
 
         HTML.standardPage(response, null, new StringBuilder(
-                "<form name=\"shoot\" method=\"POST\" action=\"validate\">" +
-                "<div class=\"header\">Testing JSON Signatures</div>")
+                "<form name='shoot' method='POST' action='validate'>" +
+                "<div class='header'>Testing JSON Signatures</div>")
             .append(HTML.fancyText(true,
                 JWS_OBJECT,
                 10, 
@@ -253,8 +253,8 @@ public class ValidateServlet extends HttpServlet {
                 HTML.encode(CreateServlet.DEFAULT_SIG_LBL),
                 "Anticipated signature label"))
             .append(
-                "<div style=\"display:flex;justify-content:center\">" +
-                "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
+                "<div style='display:flex;justify-content:center'>" +
+                "<div class='stdbtn' onclick=\"document.forms.shoot.submit()\">" +
                 "Validate JSON Signature" +
                 "</div>" +
                 "</div>" +

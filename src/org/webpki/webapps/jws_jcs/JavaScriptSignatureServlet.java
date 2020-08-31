@@ -50,16 +50,21 @@ public class JavaScriptSignatureServlet extends HttpServlet {
                         .replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;");
             HTML.standardPage(response,
                               null, 
-                              new StringBuilder("<div class=\"header\">Signatures in JavaScript Notation</div>")
+                              new StringBuilder(
+                 "<div class=\"header\">Signatures in JavaScript Notation</div>")
                                   .append(HTML.fancyBox("verify",
                                                         htmlSafe,
-                                                        "JavaScript compatible object featuring an embedded JWS signature element"))
-                                  .append("<div style=\"padding-top:20pt\">Note that the signature above is not verified.  The only difference between " +
-                                          "the JavaScript notation and &quot;true&quot; JSON is the removal of the (usually redundant) quote characters " +
-                                          "around property names.  Names that interfere with JavaScript naming " +
-                                          "conventions for variables like '5' or 'my.prop' will though be quoted.</div>" +
-                                          "<div style=\"padding-top:5pt\">Since the JavaScript <code>JSON.stringify()</code> " +
-                                          "method restores the \"true\" JSON format, the two notations are fully interoperable.</div>"));
+      "JavaScript compatible object featuring an embedded JWS signature element"))
+                                  .append(
+      "<div style=\"padding-top:20pt\">Note that the signature above is not verified. " +
+      "The only difference between " +
+      "the JavaScript notation and &quot;true&quot; JSON is the removal of the " +
+      "(usually redundant) quote characters " +
+      "around property names.  Names that interfere with JavaScript naming " +
+      "conventions for variables like '5' or 'my.prop' will though be quoted.</div>" +
+      "<div style=\"padding-top:5pt\">Since the JavaScript <code>JSON.stringify()</code> " +
+      "method restores the \"true\" JSON format, the two notations are fully " +
+      "interoperable.</div>"));
         } catch (IOException e) {
             HTML.errorPage(response, e);
         }

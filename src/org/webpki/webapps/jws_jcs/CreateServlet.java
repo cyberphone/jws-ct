@@ -79,9 +79,9 @@ public class CreateServlet extends HttpServlet {
     class SelectAlg {
 
         String preSelected;
-        StringBuilder html = new StringBuilder("<select name=\"" +
-                PRM_ALGORITHM + "\" id=\"" +
-                PRM_ALGORITHM + "\" onchange=\"algChange(this.value)\">");
+        StringBuilder html = new StringBuilder("<select name='" +
+                PRM_ALGORITHM + "' id='" +
+                PRM_ALGORITHM + "' onchange=\"algChange(this.value)\">");
         
         SelectAlg(String preSelected) {
             this.preSelected = preSelected;
@@ -89,9 +89,9 @@ public class CreateServlet extends HttpServlet {
 
         SelectAlg add(SignatureAlgorithms algorithm) throws IOException {
             String algId = algorithm.getAlgorithmId(AlgorithmPreferences.JOSE);
-            html.append("<option value=\"")
+            html.append("<option value='")
                 .append(algId)
-                .append("\"")
+                .append("'")
                 .append(algId.equals(preSelected) ? " selected>" : ">")
                 .append(algId)
                 .append("</option>");
@@ -106,11 +106,11 @@ public class CreateServlet extends HttpServlet {
     
     StringBuilder checkBox(String idName, String text, boolean checked, String onchange) {
         StringBuilder html = new StringBuilder(
-                "<div style=\"display:flex;align-items:center\"><input type=\"checkbox\" id=\"")
+                "<div style='display:flex;align-items:center'><input type='checkbox' id='")
             .append(idName)
-            .append("\" name=\"")
+            .append("' name='")
             .append(idName)
-            .append("\"");
+            .append("'");
         if (checked) {
             html.append(" checked");
         }
@@ -119,7 +119,7 @@ public class CreateServlet extends HttpServlet {
                 .append(onchange)
                 .append("\"");
         }
-        html.append("><div style=\"display:inline-block\">")
+        html.append("><div style='display:inline-block'>")
             .append(text)
             .append("</div></div>");
         return html;
@@ -128,22 +128,22 @@ public class CreateServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
         String selected = "ES256";
-        StringBuilder js = new StringBuilder("\"use strict\";\n")
+        StringBuilder js = new StringBuilder("'use strict';\n")
             .append(JWSJCSService.keyDeclarations);
         StringBuilder html = new StringBuilder(
-                "<form name=\"shoot\" method=\"POST\" action=\"create\">" +
-                "<div class=\"header\">JSON Signature Creation</div>" +
+                "<form name='shoot' method='POST' action='create'>" +
+                "<div class='header'>JSON Signature Creation</div>" +
                 HTML.fancyText(
                         true,
                         PRM_JSON_DATA,
                         10,
                         "",
                         "Paste an unsigned JSON object in the text box or try with the default") +
-                 "<div style=\"display:flex;justify-content:center;margin-top:20pt\">" +
-                 "<div class=\"sigparmbox\">" +
-                 "<div style=\"display:flex;justify-content:center\">" +
-                   "<div class=\"sigparmhead\">Signature Parameters</div>" +
-                 "</div><div style=\"display:flex;align-items:center\">")
+                 "<div style='display:flex;justify-content:center;margin-top:20pt'>" +
+                 "<div class='sigparmbox'>" +
+                 "<div style='display:flex;justify-content:center'>" +
+                   "<div class='sigparmhead'>Signature Parameters</div>" +
+                 "</div><div style='display:flex;align-items:center'>")
             .append(new SelectAlg(selected)
                  .add(MACAlgorithms.HMAC_SHA256)
                  .add(MACAlgorithms.HMAC_SHA384)
@@ -158,8 +158,8 @@ public class CreateServlet extends HttpServlet {
                  .add(AsymSignatureAlgorithms.RSA_SHA512)
                  .toString())
             .append(
-                "<div style=\"display:inline-block;padding:0 10pt 0 5pt\">Algorithm</div>" +
-                "<div class=\"defbtn\" onclick=\"restoreDefaults()\">Restore&nbsp;defaults</div></div>")
+                "<div style='display:inline-block;padding:0 10pt 0 5pt'>Algorithm</div>" +
+                "<div class='defbtn' onclick=\"restoreDefaults()\">Restore&nbsp;defaults</div></div>")
             .append(checkBox(FLG_JWK_INLINE, "Automagically insert public key (JWK)",
                              false, "jwkFlagChange(this.checked)"))
             .append(checkBox(FLG_CERT_PATH, "Include provided certificate path (X5C)", 
@@ -167,15 +167,15 @@ public class CreateServlet extends HttpServlet {
             .append(checkBox(FLG_JAVASCRIPT, "Serialize as JavaScript (but do not verify)",
                              false, null))
             .append(
-                "<div style=\"display:flex;align-items:center\">" +
-                "<input type=\"text\" name=\"" + PRM_SIG_LABEL + "\" id=\"" + PRM_SIG_LABEL + "\" " +
-                "style=\"padding:0 3pt;width:7em;font-family:monospace\" " +
-                "maxlength=\"100\" value=\"" + DEFAULT_SIG_LBL + "\">" +
-                "<div style=\"display:inline-block\">&nbsp;Signature label</div></div>" +
+                "<div style='display:flex;align-items:center'>" +
+                "<input type='text' name='" + PRM_SIG_LABEL + "' id='" + PRM_SIG_LABEL + "' " +
+                "style='padding:0 3pt;width:7em;font-family:monospace' " +
+                "maxlength='100' value='" + DEFAULT_SIG_LBL + "'>" +
+                "<div style='display:inline-block'>&nbsp;Signature label</div></div>" +
                 "</div>" +
                 "</div>" +
-                "<div style=\"display:flex;justify-content:center\">" +
-                "<div class=\"stdbtn\" onclick=\"document.forms.shoot.submit()\">" +
+                "<div style='display:flex;justify-content:center'>" +
+                "<div class='stdbtn' onclick=\"document.forms.shoot.submit()\">" +
                 "Create JSON Signature" +
                 "</div>" +
                 "</div>")
@@ -273,6 +273,7 @@ public class CreateServlet extends HttpServlet {
             "  document.getElementById('" + FLG_JAVASCRIPT + "').checked = false;\n" +
             "  document.getElementById('" + FLG_JWK_INLINE + "').checked = false;\n" +
             "  document.getElementById('" + PRM_SIG_LABEL + "').value = '" + DEFAULT_SIG_LBL + "';\n" +
+            "  showCert(false);\n" +
             "  setUserData(true);\n" +
             "}\n" +
             "function algChange(alg) {\n" +

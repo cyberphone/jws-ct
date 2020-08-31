@@ -144,15 +144,19 @@ public class WebCryptoServlet extends HttpServlet {
                 "  }\n" + 
                 "  console.log('Begin creating key...');\n" + 
                 "  document.getElementById('pub.key').innerHTML = '<i>Working...</i>';\n" + 
-                "  crypto.subtle.generateKey({name: 'RSASSA-PKCS1-v1_5', hash: {name: 'SHA-256'}, modulusLength: 2048, publicExponent: new Uint8Array([0x01, 0x00, 0x01])},\n" + 
+                "  crypto.subtle.generateKey({name: 'RSASSA-PKCS1-v1_5', " +
+                "hash: {name: 'SHA-256'}, modulusLength: 2048, " +
+                "publicExponent: new Uint8Array([0x01, 0x00, 0x01])},\n" + 
                 "                            false, ['sign', 'verify']).then(function(key) {\n" + 
                 "    pubKey = key.publicKey;\n" + 
                 "    privKey = key.privateKey;\n\n" + 
                 "    crypto.subtle.exportKey('jwk', pubKey).then(function(key) {\n" + 
                 "      publicKeyInJWKFormat = key;\n" + 
                 "      console.log('generateKey() RSASSA-PKCS1-v1_5: PASS');\n" + 
-                "      document.getElementById('pub.key').innerHTML = fancyJSONBox('Generated public key in JWK format', publicKeyInJWKFormat) + " + 
-                "'<div style=\"padding-bottom:3pt;padding-top:10pt\">Editable sample data in JSON Format:</div>" + 
+                "      document.getElementById('pub.key').innerHTML = " +
+                "fancyJSONBox('Generated public key in JWK format', publicKeyInJWKFormat) + " + 
+                "'<div style=\"padding-bottom:3pt;padding-top:10pt\">" +
+                "Editable sample data in JSON Format:</div>" + 
                 "<textarea class=\"textbox\" " + 
                 "rows=\"5\" maxlength=\"10000\" id=\"json.text\">" + 
                 "{\\n" +
@@ -274,7 +278,8 @@ public class WebCryptoServlet extends HttpServlet {
                 " = jwsHeaderB64 + '..' + convertToBase64URL(new Uint8Array(signature));\n" + 
                 "    document.getElementById('" + ValidateServlet.JWS_OBJECT +
                 "').value = JSON.stringify(jsonObject);\n" +
-                "    document.getElementById('sign.res').innerHTML = fancyJSONBox('Signed data in JWS-JCS format', jsonObject) + '" + 
+                "    document.getElementById('sign.res').innerHTML = " +
+                "fancyJSONBox('Signed data in JWS-JCS format', jsonObject) + '" + 
                 "<div style=\"display:flex;justify-content:center\">" +
                 "<div class=\"stdbtn\" onclick=\"verifySignatureOnServer()\">" +
                 "Validate Signature (on the server)" +
