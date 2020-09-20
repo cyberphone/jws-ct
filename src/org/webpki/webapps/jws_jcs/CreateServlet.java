@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2019 WebPKI.org (http://webpki.org).
+ *  Copyright 2018-2020 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
-import org.webpki.jose.JOSEAsymKeyHolder;
+import org.webpki.jose.AsymKeyHolder;
 import org.webpki.jose.JOSESupport;
-import org.webpki.jose.JOSESymKeyHolder;
+import org.webpki.jose.SymKeyHolder;
 
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
@@ -363,7 +363,7 @@ public class CreateServlet extends HttpServlet {
             // Symmetric or asymmetric?
             if (signatureAlgorithm.isSymmetric()) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
-                keyHolder = new JOSESymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey));
+                keyHolder = new SymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey));
             } else {
                 // To simplify UI we require PKCS #8 with the public key embedded
                 // but we also support JWK which also has the public key
@@ -390,7 +390,7 @@ public class CreateServlet extends HttpServlet {
                 } else if (keyInlining) {
                     JOSESupport.setPublicKey(jwsProtectedHeader, keyPair.getPublic());
                 }
-                keyHolder = new JOSEAsymKeyHolder(keyPair.getPrivate());
+                keyHolder = new AsymKeyHolder(keyPair.getPrivate());
             }
 
             // Creating JWS data to be signed

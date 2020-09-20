@@ -1,5 +1,5 @@
 /*
- *  Copyright 2006-2018 WebPKI.org (http://webpki.org).
+ *  Copyright 2018-2020 WebPKI.org (http://webpki.org).
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.webpki.crypto.CustomCryptoProvider;
 import org.webpki.crypto.MACAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
-import org.webpki.jose.JOSEAsymKeyHolder;
+import org.webpki.jose.AsymKeyHolder;
 import org.webpki.jose.JOSESupport;
 
 import org.webpki.json.JSONObjectWriter;
@@ -166,7 +166,7 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
                             null, 
                             JSONParser.parse(sampleDataToSign)
                                 .serializeToBytes(JSONOutputFormats.CANONICALIZED),
-                            new JOSEAsymKeyHolder(samplePrivateKey),
+                            new AsymKeyHolder(samplePrivateKey),
                             AsymSignatureAlgorithms.ECDSA_SHA256,
                             true);
             String signature = 
