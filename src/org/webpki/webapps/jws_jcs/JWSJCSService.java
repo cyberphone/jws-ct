@@ -35,7 +35,7 @@ import org.webpki.crypto.SignatureAlgorithms;
 
 import org.webpki.jose.AsymKeyHolder;
 import org.webpki.jose.JOSESupport;
-
+import org.webpki.jose.JwsEncoder;
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
@@ -162,12 +162,11 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
             PrivateKey samplePrivateKey = 
                     PEMDecoder.getPrivateKey(getEmbeddedResource("p256privatekey.pem"));
             String jwsString = 
-                    JOSESupport.createJwsSignature(
-                            null, 
+                    JOSESupport.createJwsSignature(new JwsEncoder(
+                            new AsymKeyHolder(samplePrivateKey,
+                                              AsymSignatureAlgorithms.ECDSA_SHA256)),
                             JSONParser.parse(sampleDataToSign)
                                 .serializeToBytes(JSONOutputFormats.CANONICALIZED),
-                            new AsymKeyHolder(samplePrivateKey),
-                            AsymSignatureAlgorithms.ECDSA_SHA256,
                             true);
             String signature = 
                     new JSONObjectWriter()

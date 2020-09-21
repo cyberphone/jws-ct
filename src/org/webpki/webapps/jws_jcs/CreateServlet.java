@@ -37,6 +37,7 @@ import org.webpki.crypto.SignatureAlgorithms;
 
 import org.webpki.jose.AsymKeyHolder;
 import org.webpki.jose.JOSESupport;
+import org.webpki.jose.JwsEncoder;
 import org.webpki.jose.SymKeyHolder;
 
 import org.webpki.json.JSONObjectReader;
@@ -347,15 +348,6 @@ public class CreateServlet extends HttpServlet {
                     AsymSignatureAlgorithms.getAlgorithmFromId(algorithmParam, 
                                                                AlgorithmPreferences.JOSE);
 
-            // Create the minimal JWS header
-            JSONObjectWriter jwsProtectedHeader = 
-                    JOSESupport.setSignatureAlgorithm(new JSONObjectWriter(), signatureAlgorithm);
-
-            // Add any optional (by the user specified) arguments
-            for (String key : additionalHeaderData.getProperties()) {
-                jwsProtectedHeader.copyElement(key, key, additionalHeaderData);
-            }
-            
             // Get the signature key
             JOSESupport.CoreKeyHolder keyHolder;
             String validationKey;
@@ -363,7 +355,8 @@ public class CreateServlet extends HttpServlet {
             // Symmetric or asymmetric?
             if (signatureAlgorithm.isSymmetric()) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
-                keyHolder = new SymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey));
+                keyHolder = new SymKeyHolder(DebugFormatter.getByteArrayFromHex(validationKey),
+                                             (MACAlgorithms)signatureAlgorithm);
             } else {
                 // To simplify UI we require PKCS #8 with the public key embedded
                 // but we also support JWK which also has the public key
@@ -381,26 +374,31 @@ public class CreateServlet extends HttpServlet {
                             "\n-----END PUBLIC KEY-----";
                 }
                 privateKeyBlob = null;  // Nullify it after use
+                keyHolder = new AsymKeyHolder(keyPair.getPrivate(),
+                                              (AsymSignatureAlgorithms)signatureAlgorithm);
 
                 // Add other JWS header data that the demo program fixes 
                 if (certOption) {
-                    JOSESupport.setCertificatePath(jwsProtectedHeader,
+                    ((AsymKeyHolder)keyHolder).setCertificatePath(
                             PEMDecoder.getCertificatePath(getBinaryParameter(request,
                                                                              PRM_CERT_PATH)));
                 } else if (keyInlining) {
-                    JOSESupport.setPublicKey(jwsProtectedHeader, keyPair.getPublic());
+                    ((AsymKeyHolder)keyHolder).setPublicKey(keyPair.getPublic());
                 }
-                keyHolder = new AsymKeyHolder(keyPair.getPrivate());
             }
+            
+            // Create JWS encoder with the assigned algorithm and key
+            JwsEncoder jwsEncoder = new JwsEncoder(keyHolder);
 
-            // Creating JWS data to be signed
+            // Add any optional (by the user specified) arguments
+            jwsEncoder.addHeaderItems(additionalHeaderData);
+
+            // Creating detached JWS data to be signed
             byte[] jwsPayload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Sign it using the provided algorithm and key
-            String jwsString = JOSESupport.createJwsSignature(jwsProtectedHeader, 
+            String jwsString = JOSESupport.createJwsSignature(jwsEncoder, 
                                                               jwsPayload,
-                                                              keyHolder,
-                                                              signatureAlgorithm,
                                                               true);
             keyHolder = null;  // Nullify it after use
 
