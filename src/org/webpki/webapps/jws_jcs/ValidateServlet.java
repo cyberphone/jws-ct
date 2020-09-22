@@ -121,7 +121,7 @@ public class ValidateServlet extends HttpServlet {
             }
             
             // Recreate the validation key and validate the signature
-            JOSESupport.CoreSignatureValidator validator;
+            JOSESupport.SignatureValidator validator;
             boolean jwkValidationKey = validationKey.startsWith("{");
             if (jwsDecoder.getSignatureAlgorithm().isSymmetric()) {
                 validator = new HmacValidator(DebugFormatter.getByteArrayFromHex(validationKey));

@@ -349,7 +349,7 @@ public class CreateServlet extends HttpServlet {
                                                                AlgorithmPreferences.JOSE);
 
             // Get the signature key
-            JOSESupport.CoreKeyHolder keyHolder;
+            JOSESupport.KeyHolder keyHolder;
             String validationKey;
             
             // Symmetric or asymmetric?
