@@ -132,27 +132,33 @@ public class JWSJCSService extends InitPropertyReader implements ServletContextL
             /////////////////////////////////////////////////////////////////////////////////////////////
             keyDeclarations = 
                     new KeyDeclaration(KeyDeclaration.PRIVATE_KEYS, "privatekey.pem")
-                          .addKey(AsymSignatureAlgorithms.ED25519,      "ed25519")
-                          .addKey(AsymSignatureAlgorithms.ED448,        "ed448")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
+                          .addKey(AsymSignatureAlgorithms.ED25519,       "ed25519")
+                          .addKey(AsymSignatureAlgorithms.ED448,         "ed448")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256,  "p256")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384,  "p384")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512,  "p521")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,    "r2048")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,    null)
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,    null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA256, null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA384, null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA512, null).toString() +
                     new KeyDeclaration(KeyDeclaration.CERTIFICATES, "certpath.pem")
-                          .addKey(AsymSignatureAlgorithms.ED25519,      "ed25519")
-                          .addKey(AsymSignatureAlgorithms.ED448,        "ed448")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256, "p256")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384, "p384")
-                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512, "p521")
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,   "r2048")
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,   null)
-                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,   null).toString() +
+                          .addKey(AsymSignatureAlgorithms.ED25519,       "ed25519")
+                          .addKey(AsymSignatureAlgorithms.ED448,         "ed448")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA256,  "p256")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA384,  "p384")
+                          .addKey(AsymSignatureAlgorithms.ECDSA_SHA512,  "p521")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA256,    "r2048")
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA384,    null)
+                          .addKey(AsymSignatureAlgorithms.RSA_SHA512,    null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA256, null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA384, null)
+                          .addKey(AsymSignatureAlgorithms.RSAPSS_SHA512, null).toString() +
                     new KeyDeclaration(KeyDeclaration.SECRET_KEYS, "bitkey.hex")
-                          .addKey(MACAlgorithms.HMAC_SHA256,            "a256")
-                          .addKey(MACAlgorithms.HMAC_SHA384,            "a384")
-                          .addKey(MACAlgorithms.HMAC_SHA512,            "a512").toString();
+                          .addKey(MACAlgorithms.HMAC_SHA256,             "a256")
+                          .addKey(MACAlgorithms.HMAC_SHA384,             "a384")
+                          .addKey(MACAlgorithms.HMAC_SHA512,             "a512").toString();
 
             /////////////////////////////////////////////////////////////////////////////////////////////
             // Sample signature for verification
