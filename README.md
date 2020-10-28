@@ -53,20 +53,20 @@ If you want to test the signature scheme without any installation or downloading
 demo is currently available at: https://mobilepki.org/jws-jcs/home
 
 ### Detailed Signing Operation
-1. Create or parse the JSON object to be signed using *existing* JSON tools
-2. Apply the canonicalizing filter process described in
- https://tools.ietf.org/html/rfc8785#section-3.2 on the created data
+1. Create or parse the JSON object to be signed
+2. Use the result of the previous step as input to the canonicalizing
+process described in
+ https://tools.ietf.org/html/rfc8785#section-3.2
 3. Use the result of the previous step as "JWS Payload" to the JWS signature process described in
 https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization mode
 4. Add the resulting JWS string to the original JSON
 object through a *designated signature property of your choice*
-using *existing* JSON tools
 
 ### Detailed Validation Operation
-1. Parse the signed JSON object using *existing* JSON tools
+1. Parse the signed JSON object
 2. Read and save the JWS string from the *designated signature property*
 3. Remove the *designated signature property* from the parsed JSON object
-4. Apply the canonicalizing filter process described in
+4. Apply the canonicalizing process described in
  https://tools.ietf.org/html/rfc8785#section-3.2 on the remaining object
 5. Use the result of the previous step as "JWS Payload" to the JWS validation process described in
 https://tools.ietf.org/html/rfc7515#appendix-F
