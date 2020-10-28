@@ -58,8 +58,9 @@ demo is currently available at: https://mobilepki.org/jws-jcs/home
  https://tools.ietf.org/html/rfc8785#section-3.2 on the created data
 3. Use the result of the previous step as "JWS Payload" to the JWS signature process described in
 https://tools.ietf.org/html/rfc7515#appendix-F using the *compact* serialization mode
-4. Add the resulting JWS string to the original JSON data through a *designated signature property of your choice*
-5. Serialize the completed (now signed) JSON object using *existing* JSON tools
+4. Add the resulting JWS string to the original JSON
+data through a *designated signature property of your choice*
+using *existing* JSON tools
 
 ### Detailed Validation Operation
 1. Parse the signed JSON data using *existing* JSON tools
