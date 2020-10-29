@@ -39,7 +39,7 @@ independent representation* of the JWS "payload".  Applied to the sample you wou
 {"otherProperties":[2000,true],"statement":"Hello signed world!"}
 ```
 Note that this method is *internal to the signatures process*. The "wire format" can be kept "as is" although the
-canonicalized version the object would also be fully valid.
+canonicalized version of the object would also be fully valid.
 
 The knowledgeable reader probably realizes that this is quite similar to using an HTTP header for holding a detached JWS object.
 The primary advantages of this scheme versus using HTTP headers include:
