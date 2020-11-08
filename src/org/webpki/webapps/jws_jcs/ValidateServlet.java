@@ -18,9 +18,6 @@ package org.webpki.webapps.jws_jcs;
 
 import java.io.IOException;
 
-import java.security.GeneralSecurityException;
-import java.security.PublicKey;
-
 import java.security.cert.X509Certificate;
 
 import java.util.Vector;
@@ -95,6 +92,13 @@ public class ValidateServlet extends HttpServlet {
             }
             
             // Now begin the real work...
+            
+            // Note: some of the stuff here is unnecessary if you use
+            // the JWS/CT validation method but it hides the data we need for
+            // illustrating the function
+
+            // Decode
+            JwsDecoder jwsDecoder = new JwsDecoder(parsedObject, signatureLabel);
 
             // Get the embedded (detached) JWS signature
             String jwsString = parsedObject.getString(signatureLabel);
@@ -105,8 +109,6 @@ public class ValidateServlet extends HttpServlet {
             // Get the actual signed data.  Of course using RFC 8785 :)
             byte[] jwsPayload = parsedObject.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
-            // Decode
-            JwsDecoder jwsDecoder = new JwsDecoder(jwsString);
             X509Certificate[] certificatePath = jwsDecoder.getOptionalCertificatePath();
             StringBuilder certificateData = null;
             if (certificatePath != null) {
@@ -133,7 +135,7 @@ public class ValidateServlet extends HttpServlet {
                                                                               :
                         PEMDecoder.getPublicKey(validationKey.getBytes("utf-8")));
             }
-            jwsValidator.validateSignature(jwsDecoder, jwsPayload);
+            jwsValidator.validateSignature(jwsDecoder);
             StringBuilder html = new StringBuilder(
                     "<div class='header'> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 

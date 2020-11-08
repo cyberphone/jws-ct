@@ -398,6 +398,9 @@ public class CreateServlet extends HttpServlet {
             byte[] jwsPayload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             // Sign it using the provided algorithm and key
+
+            // Note: we didn't use the JWS/CT API method because it hides
+            // the data needed for illustrating the function.
             String jwsString = jwsSigner.createSignature(jwsPayload, true);
 
             // Create the completed object
