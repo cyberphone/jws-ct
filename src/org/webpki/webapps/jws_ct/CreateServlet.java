@@ -415,17 +415,6 @@ public class CreateServlet extends HttpServlet {
                             jwsString.substring(jwsString.lastIndexOf('.')));
             }
 
-            // The following is just for the demo.  That is, we want to preserve
-            // the original ("untouched") JSON data for educational purposes.
-            int i = signedJsonObject.lastIndexOf("\"" + signatureLabel);
-            if (signedJsonObject.charAt(i - 1) == ',') {
-                i--;
-            }
-            int j = jsonData.lastIndexOf("}");
-            signedJsonObject = jsonData.substring(0, j) + 
-                    signedJsonObject.substring(i, signedJsonObject.length() - 1) +
-                    jsonData.substring(j);
-
             // We terminate by validating the signature as well
             request.getRequestDispatcher((jsFlag ? "jssignature?" : "validate?") +
                 ValidateServlet.JWS_OBJECT + 

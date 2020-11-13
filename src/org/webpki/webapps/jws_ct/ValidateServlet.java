@@ -20,8 +20,6 @@ import java.io.IOException;
 
 import java.security.cert.X509Certificate;
 
-import java.util.Vector;
-
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -66,30 +64,15 @@ public class ValidateServlet extends HttpServlet {
             if (!request.getContentType().startsWith("application/x-www-form-urlencoded")) {
                 throw new IOException("Unexpected MIME type:" + request.getContentType());
             }
-            logger.info("JSON Signature Verification Entered");
-            // Get the two input data items
-            String signedJsonObject = CreateServlet.getParameter(request, JWS_OBJECT);
+
+            // Get the three input data items
+            JSONObjectReader parsedObject = JSONParser.parse(
+                    CreateServlet.getParameter(request, JWS_OBJECT));
             String validationKey = CreateServlet.getParameter(request, JWS_VALIDATION_KEY);
             String signatureLabel = CreateServlet.getParameter(request, JWS_SIGN_LABL);
 
-            // Parse the JSON data
-            JSONObjectReader parsedObject = JSONParser.parse(signedJsonObject);
-            
             // Create a pretty-printed JSON object without canonicalization
             String prettySignature = parsedObject.serializeToString(JSONOutputFormats.PRETTY_HTML);
-            Vector<String> tokens = 
-                    new JSONTokenExtractor().getTokens(signedJsonObject);
-            int fromIndex = 0;
-            for (String token : tokens) {
-                int start = prettySignature.indexOf("<span ", fromIndex);
-                int stop = prettySignature.indexOf("</span>", start);
-                // <span style="color:#C00000">
-                prettySignature = prettySignature.substring(0, 
-                                                            start + 28) + 
-                                                              token + 
-                                                              prettySignature.substring(stop);
-                fromIndex = start + 1;
-            }
             
             // Now begin the real work...
             
