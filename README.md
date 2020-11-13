@@ -1,4 +1,4 @@
-![](https://cyberphone.github.io/doc/security/jws-ct.svg)
+![k](https://cyberphone.github.io/doc/security/jws-ct.svg)
 
 ## JWS/CT - Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
 This repository contains a PoC showing how you can create "clear text" JSON signatures
