@@ -1,16 +1,16 @@
-<project name="JWS Clear-text Signature Demo" default="help">
+<project name="JWS/CT Clear-text Signature Demo" default="help">
 
   <!-- set properties for this build -->
-  <property file="jws-jcs.properties"/>
+  <property file="jws-ct.properties"/>
   <property name="openkeystore.dir" location="${openkeystore}"/>
   <property name="src.dir" value="src"/>
   <property name="temp.dir" value=".tmp"/>
   <property name="dist.dir" value="dist"/>
-  <property name="class_war_path" value="WEB-INF/classes/org/webpki/webapps/jws_jcs"/>
+  <property name="class_war_path" value="WEB-INF/classes/org/webpki/webapps/jws_ct"/>
 
   <property name="logging" value="false"/>
   
-  <property name="appcorename" value="jws-jcs"/>
+  <property name="appcorename" value="jws-ct"/>
   <property name="application" value="${appcorename}.war"/>
   
   <property name="keypassword" value="foo123"/>
@@ -88,7 +88,7 @@
       <fileset dir="web"/>
       <fileset dir="${openkeystore.dir}/resources/images">
         <include name="thelab.svg"/>
-        <include name="jws-jcs.svg"/>
+        <include name="jws-ct.svg"/>
       </fileset>
       <zipfileset dir="${openkeystore.dir}/testdata/keys" prefix="${class_war_path}">
         <include name="a*.hex"/>

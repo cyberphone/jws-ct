@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.webpki.webapps.jws_jcs;
+package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 
@@ -189,12 +189,12 @@ public class ValidateServlet extends HttpServlet {
             .append(HTML.fancyText(true,
                 JWS_OBJECT,
                 10, 
-                HTML.encode(JWSJCSService.sampleSignature),
+                HTML.encode(JwsCtService.sampleSignature),
                 "Paste a signed JSON object in the text box or try with the default"))
             .append(HTML.fancyText(true,
                 JWS_VALIDATION_KEY,
                 4, 
-                HTML.encode(JWSJCSService.samplePublicKey),
+                HTML.encode(JwsCtService.samplePublicKey),
                             "Validation key (secret key in hexadecimal or public " +
                               "key in PEM or &quot;plain&quot; JWK format)"))
             .append(HTML.fancyText(true,

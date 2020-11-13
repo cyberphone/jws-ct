@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.webpki.webapps.jws_jcs;
+package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 
@@ -32,7 +32,7 @@ public class HTML {
     static final String HTML_INIT = "<!DOCTYPE html>" +
         "<html lang='en'><head><link rel='icon' href='webpkiorg.png' sizes='192x192'>" + 
         "<meta name='viewport' content='initial-scale=1.0'/>" + 
-        "<title>JWS/JCS Signature Lab</title>" + 
+        "<title>JWS/CT Signature Lab</title>" + 
         "<link rel='stylesheet' type='text/css' href='style.css'>";
 
     static String encode(String val) {
@@ -81,7 +81,7 @@ public class HTML {
             "style='cursor:pointer;height:25pt;padding-bottom:10pt;margin-right:30pt'" +
             " onclick=\"document.location.href='home'\" title='Home of the lab...'/></div>" +
             "<div style='display:flex;padding-bottom:10pt'>" +
-            "<a href='https://github.com/cyberphone/jws-jcs' target='_blank'><img src='jws-jcs.svg' " +
+            "<a href='https://github.com/cyberphone/jws-ct' target='_blank'><img src='jws-ct.svg' " +
             "style='height:20pt' " +
             "title='Specifications, source code, etc.'/></a>" +
             "</div>" +
@@ -92,7 +92,7 @@ public class HTML {
 
     static void output(HttpServletResponse response, String html)
             throws IOException, ServletException {
-        if (JWSJCSService.logging) {
+        if (JwsCtService.logging) {
             logger.info(html);
         }
         response.setContentType("text/html; charset=utf-8");

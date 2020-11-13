@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.webpki.webapps.jws_jcs;
+package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,9 +44,9 @@ import org.webpki.util.PEMDecoder;
 
 import org.webpki.webutil.InitPropertyReader;
 
-public class JWSJCSService extends InitPropertyReader implements ServletContextListener {
+public class JwsCtService extends InitPropertyReader implements ServletContextListener {
 
-    static Logger logger = Logger.getLogger(JWSJCSService.class.getName());
+    static Logger logger = Logger.getLogger(JwsCtService.class.getName());
 
     static String sampleSignature;
     

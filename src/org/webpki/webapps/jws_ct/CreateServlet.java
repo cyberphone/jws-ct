@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.webpki.webapps.jws_jcs;
+package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 
@@ -129,7 +129,7 @@ public class CreateServlet extends HttpServlet {
             throws IOException, ServletException {
         String selected = "ES256";
         StringBuilder js = new StringBuilder("'use strict';\n")
-            .append(JWSJCSService.keyDeclarations);
+            .append(JwsCtService.keyDeclarations);
         StringBuilder html = new StringBuilder(
                 "<form name='shoot' method='POST' action='create'>" +
                 "<div class='header'>JSON Signature Creation</div>" +
@@ -237,17 +237,17 @@ public class CreateServlet extends HttpServlet {
             "    disableAndClearCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    disableAndClearCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_SECRET_KEY + "', alg, " + 
-                 JWSJCSService.KeyDeclaration.SECRET_KEYS + ", unconditionally);\n" +
+                 JwsCtService.KeyDeclaration.SECRET_KEYS + ", unconditionally);\n" +
             "    showSec(true)\n" +
             "  } else {\n" +
             "    showSec(false)\n" +
             "    enableCheckBox('" + FLG_CERT_PATH + "');\n" +
             "    enableCheckBox('" + FLG_JWK_INLINE + "');\n" +
             "    fill('" + PRM_PRIVATE_KEY + "', alg, " + 
-            JWSJCSService.KeyDeclaration.PRIVATE_KEYS + ", unconditionally);\n" +
+            JwsCtService.KeyDeclaration.PRIVATE_KEYS + ", unconditionally);\n" +
             "    showPriv(true);\n" +
             "    fill('" + PRM_CERT_PATH + "', alg, " + 
-            JWSJCSService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
+            JwsCtService.KeyDeclaration.CERTIFICATES + ", unconditionally);\n" +
             "    showCert(document.getElementById('" + FLG_CERT_PATH + "').checked);\n" +
             "  }\n" +
             "}\n" +
@@ -409,7 +409,7 @@ public class CreateServlet extends HttpServlet {
                 .serializeToString(JSONOutputFormats.NORMALIZED);
             
             // How things should appear in a "regular" JWS
-            if (JWSJCSService.logging) {
+            if (JwsCtService.logging) {
                 logger.info(jwsString.substring(0, jwsString.lastIndexOf('.')) +
                             Base64URL.encode(jwsPayload) +
                             jwsString.substring(jwsString.lastIndexOf('.')));

@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.webpki.webapps.jws_jcs;
+package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 
@@ -36,7 +36,7 @@ public class HomeServlet extends HttpServlet {
             "<div style='padding-top:15pt'>This site permits testing and debugging systems utilizing a " +
             "scheme for clear text JSON signatures tentatively targeted for " +
             "IETF standardization.  For detailed technical information and " +
-            "open source code, click on the JWS&#x2022;JCS logotype.</div>" +
+            "open source code, click on the JWS/CT logotype.</div>" +
             "<div style='display:flex;justify-content:center'><table>" +
             "<tr><td><div class='multibtn' " +
             "onclick=\"document.location.href='create'\" " +

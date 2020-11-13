@@ -1,6 +1,6 @@
-![JWS-JCS](https://cyberphone.github.io/doc/security/jws-jcs.svg)
+![JWS-CT](https://cyberphone.github.io/doc/security/jws-ct.svg)
 
-## Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
+## JWS/CT - Combining "Detached" JWS with JCS (JSON Canonicalization Scheme)
 This repository contains a PoC showing how you can create "clear text" JSON signatures
 by combining detached JWS compact objects with a simple
 [canonicalization](https://github.com/cyberphone/json-canonicalization#json-canonicalization)
@@ -50,7 +50,7 @@ browsers expressed in JavaScript or be asynchronously exchanged over WebSockets
 
 ### On Line Demo
 If you want to test the signature scheme without any installation or downloading, a
-demo is currently available at: https://mobilepki.org/jws-jcs/home
+demo is currently available at: https://mobilepki.org/jws-ct/home
 
 ### Detailed Signing Operation
 1. Create or parse the JSON object to be signed

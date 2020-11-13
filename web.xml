@@ -11,37 +11,37 @@
     </context-param>
 
     <listener>
-        <listener-class>org.webpki.webapps.jws_jcs.JWSJCSService</listener-class>
+        <listener-class>org.webpki.webapps.jws_ct.JwsCtService</listener-class>
      </listener>
 
     <servlet>
         <servlet-name>HomeServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.HomeServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.HomeServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>CreateServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.CreateServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.CreateServlet</servlet-class>
     </servlet>
     
     <servlet>
         <servlet-name>ValidateServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.ValidateServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.ValidateServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>WebCryptoServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.WebCryptoServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.WebCryptoServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>NoWebCryptoServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.NoWebCryptoServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.NoWebCryptoServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>JavaScriptSignatureServlet</servlet-name>
-        <servlet-class>org.webpki.webapps.jws_jcs.JavaScriptSignatureServlet</servlet-class>
+        <servlet-class>org.webpki.webapps.jws_ct.JavaScriptSignatureServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
