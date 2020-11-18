@@ -76,21 +76,11 @@ public class ValidateServlet extends HttpServlet {
             
             // Now begin the real work...
             
-            // Note: some of the stuff here is unnecessary if you use
-            // the JWS/CT validation method but it hides the data we need for
-            // illustrating the function
-
             // Decode
             JwsDecoder jwsDecoder = new JwsDecoder(parsedObject, signatureLabel);
-
-            // Get the embedded (detached) JWS signature
+            
+            // For demo purposes only
             String jwsString = parsedObject.getString(signatureLabel);
-            
-            // Remove the signature property
-            parsedObject.removeProperty(signatureLabel);
-            
-            // Get the actual signed data.  Of course using RFC 8785 :)
-            byte[] jwsPayload = parsedObject.serializeToBytes(JSONOutputFormats.CANONICALIZED);
 
             X509Certificate[] certificatePath = jwsDecoder.getOptionalCertificatePath();
             StringBuilder certificateData = null;
@@ -123,11 +113,14 @@ public class ValidateServlet extends HttpServlet {
                     "<div class='header'> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 
                                       prettySignature, 
-                                      "JSON object signed by an embedded JWS element"))           
+                                      "\"Pretty-printed\" JWS/CT object"))           
                 .append(HTML.fancyBox("header", 
-                                      jwsDecoder.getJwsProtectedHeader().serializeToString(
-                                              JSONOutputFormats.PRETTY_HTML),
+                                      jwsDecoder.getJwsHeaderAsString(),
                                       "Decoded JWS header"))
+                .append(HTML.fancyBox("canonical", 
+                                      HTML.encode(new String(jwsDecoder.getPayload(), "utf-8")),
+                                      "Canonical (RFC 8785) version of the signed JSON data " +
+                                        "(\"JWS Payload\")"))
                 .append(HTML.fancyBox("vkey",
                                       jwkValidationKey ? 
                                           JSONParser.parse(validationKey)
@@ -139,12 +132,7 @@ public class ValidateServlet extends HttpServlet {
                                              "secret key in hexadecimal" :
                                              "public key in " + 
                                              (jwkValidationKey ? "JWK" : "PEM") +
-                                             " format")))
-                .append(HTML.fancyBox("canonical", 
-                                      HTML.encode(new String(jwsPayload, "utf-8")),
-                                      "Canonical version of the JSON data " +
-                                        "(with possible line breaks " +
-                                        "for display purposes only)"));
+                                             " format")));
             if (certificateData != null) {
                 html.append(HTML.fancyBox("certpath", 
                                           certificateData.toString(),
@@ -153,7 +141,7 @@ public class ValidateServlet extends HttpServlet {
             html.append(HTML.fancyBox("original", 
                                       new StringBuilder(jwsString)
                                         .insert(jwsString.indexOf('.') + 1, 
-                                                Base64URL.encode(jwsPayload)).toString(),
+                                                Base64URL.encode(jwsDecoder.getPayload())).toString(),
           "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out
