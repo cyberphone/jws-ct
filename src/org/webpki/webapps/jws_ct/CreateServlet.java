@@ -401,7 +401,7 @@ public class CreateServlet extends HttpServlet {
 
             // Note: we didn't use the JWS/CT API method because it hides
             // the data needed for illustrating the function.
-            String jwsString = jwsSigner.createSignature(jwsPayload, true);
+            String jwsString = jwsSigner.sign(jwsPayload, true);
 
             // Create the completed object
             String signedJsonObject = new JSONObjectWriter(reader)

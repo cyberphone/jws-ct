@@ -108,7 +108,7 @@ public class ValidateServlet extends HttpServlet {
                                                                               :
                         PEMDecoder.getPublicKey(validationKey.getBytes("utf-8")));
             }
-            jwsValidator.validateSignature(jwsDecoder);
+            jwsValidator.validate(jwsDecoder);
             StringBuilder html = new StringBuilder(
                     "<div class='header'> Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 

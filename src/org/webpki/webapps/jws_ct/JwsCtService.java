@@ -166,10 +166,11 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
             String sampleDataToSign = getEmbeddedResourceString("sample-data-to-sign.json");
             PrivateKey samplePrivateKey = 
                     PEMDecoder.getPrivateKey(getEmbeddedResource("p256privatekey.pem"));
-            String jwsString = new JwsAsymKeySigner(samplePrivateKey, AsymSignatureAlgorithms.ECDSA_SHA256)
-                    .createSignature(JSONParser.parse(sampleDataToSign)
-                                        .serializeToBytes(JSONOutputFormats.CANONICALIZED),
-                                     true);
+            String jwsString = new JwsAsymKeySigner(samplePrivateKey,
+                                                    AsymSignatureAlgorithms.ECDSA_SHA256)
+                    .sign(JSONParser.parse(sampleDataToSign)
+                            .serializeToBytes(JSONOutputFormats.CANONICALIZED),
+                          true);
             String signature = 
                     new JSONObjectWriter()
                         .setString(CreateServlet.DEFAULT_SIG_LBL, 
