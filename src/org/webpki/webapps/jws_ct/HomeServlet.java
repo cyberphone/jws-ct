@@ -35,7 +35,10 @@ public class HomeServlet extends HttpServlet {
             "<div class='header'>JSON Clear Text Signature</div>" +
             "<div style='padding-top:15pt'>This site permits testing and debugging " +
             "a scheme for \"Clear&nbsp;Text\" JSON signatures tentatively targeted for " +
-            "publication as an IETF RFC.  For detailed technical information and " +
+            "publication as an <a href='" +
+            "https://www.ietf.org/archive/id/draft-jordan-jws-ct-01.html" +
+            "' target='_blank'>IETF RFC</a>. " +
+            "For detailed technical information and " +
             "open source code, click on the JWS/CT logotype.</div>" +
             "<div style='display:flex;justify-content:center'><table>" +
             "<tr><td><div class='multibtn' " +

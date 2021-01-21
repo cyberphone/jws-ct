@@ -184,7 +184,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
             /////////////////////////////////////////////////////////////////////////////////////////////
             logging = getPropertyBoolean("logging");
 
-            logger.info("JWS-JWS Demo Successfully Initiated");
+            logger.info("JWS/CT Demo Successfully Initiated");
         } catch (Exception e) {
             logger.log(Level.SEVERE, "********\n" + e.getMessage() + "\n********", e);
         }

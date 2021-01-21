@@ -193,7 +193,7 @@ public class CreateServlet extends HttpServlet {
                           PRM_SECRET_KEY,
                           1,
                           "",
-                          "Secret key in hexadecimal format"))
+                          "Secret key in hexadecimal format or @string (where string=key)"))
             .append(
                 HTML.fancyText(false,
                           PRM_PRIVATE_KEY,
@@ -324,7 +324,13 @@ public class CreateServlet extends HttpServlet {
         return s.toString();
     }
 
-   
+    static byte[] decodeSymmetricKey(String keyString) throws IOException {
+        return keyString.startsWith("@") ? 
+                   keyString.substring(1).getBytes("utf-8") 
+                                         : 
+                  DebugFormatter.getByteArrayFromHex(keyString);
+    }
+
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
          try {
@@ -357,8 +363,8 @@ public class CreateServlet extends HttpServlet {
             // Symmetric or asymmetric?
             if (signatureAlgorithm.isSymmetric()) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
-                jwsSigner = new JwsHmacSigner(DebugFormatter.getByteArrayFromHex(validationKey),
-                                              (HmacAlgorithms)signatureAlgorithm);
+                jwsSigner = new JwsHmacSigner(decodeSymmetricKey(validationKey),
+                                             (HmacAlgorithms)signatureAlgorithm);
             } else {
                 // To simplify UI we require PKCS #8 with the public key embedded
                 // but we also support JWK which also has the public key

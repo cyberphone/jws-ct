@@ -41,7 +41,6 @@ import org.webpki.jose.jws.JwsAsymSignatureValidator;
 import org.webpki.jose.jws.JwsDecoder;
 
 import org.webpki.util.Base64URL;
-import org.webpki.util.DebugFormatter;
 import org.webpki.util.PEMDecoder;
 
 public class ValidateServlet extends HttpServlet {
@@ -101,7 +100,7 @@ public class ValidateServlet extends HttpServlet {
             JwsValidator jwsValidator;
             boolean jwkValidationKey = validationKey.startsWith("{");
             if (jwsDecoder.getSignatureAlgorithm().isSymmetric()) {
-                jwsValidator = new JwsHmacValidator(DebugFormatter.getByteArrayFromHex(validationKey));
+                jwsValidator = new JwsHmacValidator(CreateServlet.decodeSymmetricKey(validationKey));
             } else {
                 jwsValidator = new JwsAsymSignatureValidator(jwkValidationKey ? 
                         JSONParser.parse(validationKey).getCorePublicKey(AlgorithmPreferences.JOSE)
@@ -127,12 +126,14 @@ public class ValidateServlet extends HttpServlet {
                                               .serializeToString(JSONOutputFormats.PRETTY_HTML)
                                                        :
                                       HTML.encode(validationKey).replace("\n", "<br>"),
-                                      "Signature validation " +
-                                      (jwsDecoder.getSignatureAlgorithm().isSymmetric() ? 
-                                             "secret key in hexadecimal" :
-                                             "public key in " + 
-                                             (jwkValidationKey ? "JWK" : "PEM") +
-                                             " format")));
+                          "Signature validation " +
+                              (jwsDecoder.getSignatureAlgorithm().isSymmetric() ?
+                             "secret key " +
+                             (validationKey.startsWith("@") ? "string value" : "in hexadecimal")
+                                                                                :
+                             "public key in " + 
+                             (jwkValidationKey ? "JWK" : "PEM") +
+                             " format")));
             if (certificateData != null) {
                 html.append(HTML.fancyBox("certpath", 
                                           certificateData.toString(),
@@ -166,8 +167,8 @@ public class ValidateServlet extends HttpServlet {
                 JWS_VALIDATION_KEY,
                 4, 
                 HTML.encode(JwsCtService.samplePublicKey),
-                            "Validation key (secret key in hexadecimal or public " +
-                              "key in PEM or &quot;plain&quot; JWK format)"))
+                            "Validation key: secret key in hexadecimal or @string or public " +
+                              "key in PEM or &quot;plain&quot; JWK format"))
             .append(HTML.fancyText(true,
                 JWS_SIGN_LABL,
                 1, 
