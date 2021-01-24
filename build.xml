@@ -103,6 +103,7 @@
         <exclude name="*-2*"/>
       </zipfileset>
       <zipfileset file="sample-data-to-sign.json" prefix="${class_war_path}"/>
+      <zipfileset file="sample-data-to-hash.json" prefix="${class_war_path}"/>
     </war>
   </target>
    

@@ -50,6 +50,8 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
 
     static String sampleSignature;
     
+    static String sampleJsonForHashing;
+    
     static String samplePublicKey;
     
     static String keyDeclarations;
@@ -161,6 +163,11 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
                           .addKey(HmacAlgorithms.HMAC_SHA512,            "a512").toString();
 
             /////////////////////////////////////////////////////////////////////////////////////////////
+            // Sample data for hashing
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            sampleJsonForHashing = getEmbeddedResourceString("sample-data-to-hash.json");
+
+            /////////////////////////////////////////////////////////////////////////////////////////////
             // Sample signature for verification
             /////////////////////////////////////////////////////////////////////////////////////////////
             String sampleDataToSign = getEmbeddedResourceString("sample-data-to-sign.json");
@@ -179,6 +186,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
                               "," +
                               signature.substring(signature.indexOf("\n "));
             samplePublicKey = getEmbeddedResourceString("p256publickey.pem").trim();
+
             /////////////////////////////////////////////////////////////////////////////////////////////
             // Logging?
             /////////////////////////////////////////////////////////////////////////////////////////////

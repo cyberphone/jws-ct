@@ -44,6 +44,11 @@
         <servlet-class>org.webpki.webapps.jws_ct.JavaScriptSignatureServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>HashServlet</servlet-name>
+        <servlet-class>org.webpki.webapps.jws_ct.HashServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>
         <url-pattern>/home</url-pattern>
@@ -72,6 +77,11 @@
     <servlet-mapping>
         <servlet-name>JavaScriptSignatureServlet</servlet-name>
         <url-pattern>/jssignature</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>HashServlet</servlet-name>
+        <url-pattern>/hash</url-pattern>
     </servlet-mapping>
 
     <security-constraint>

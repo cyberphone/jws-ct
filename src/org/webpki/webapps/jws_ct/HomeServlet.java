@@ -56,6 +56,11 @@ public class HomeServlet extends HttpServlet {
             "title='&quot;Experimental&quot; - WebCrypto'>" +
             "&quot;Experimental&quot; - WebCrypto" +
             "</div></td></tr>" +
+            "<tr><td><div class='multibtn' " +
+            "onclick=\"document.location.href='hash'\" " +
+            "title='Canonicalize and Hash JSON'>" +
+            "Canonicalize and Hash JSON" +
+            "</div></td></tr>" +
             "</table></div>" +
             "<div class='sitefooter'>Privacy/security notice: No user provided data is " +
             "ever stored or logged on the server; it only processes the data and returns the " +
