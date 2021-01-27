@@ -109,7 +109,7 @@ public class ValidateServlet extends HttpServlet {
             }
             jwsValidator.validate(jwsDecoder);
             StringBuilder html = new StringBuilder(
-                    "<div class='header'> Signature Successfully Validated</div>")
+                    "<div class='header'>Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 
                                       prettySignature, 
                                       "\"Pretty-printed\" JWS/CT object"))           

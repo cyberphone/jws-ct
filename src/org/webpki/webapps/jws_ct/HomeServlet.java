@@ -36,7 +36,7 @@ public class HomeServlet extends HttpServlet {
             "<div style='padding-top:15pt'>This site permits testing and debugging " +
             "a scheme for \"Clear&nbsp;Text\" JSON signatures tentatively targeted for " +
             "publication as an <a href='" +
-            "https://www.ietf.org/archive/id/draft-jordan-jws-ct-01.html" +
+            "https://www.ietf.org/archive/id/draft-jordan-jws-ct-02.html" +
             "' target='_blank'>IETF RFC</a>. " +
             "For detailed technical information and " +
             "open source code, click on the JWS/CT logotype.</div>" +
@@ -60,6 +60,11 @@ public class HomeServlet extends HttpServlet {
             "onclick=\"document.location.href='hash'\" " +
             "title='Canonicalize and Hash JSON'>" +
             "Canonicalize and Hash JSON" +
+            "</div></td></tr>" +
+            "<tr><td><div class='multibtn' " +
+            "onclick=\"document.location.href='keyconv'\" " +
+            "title='Convert JWK and PEM keys'>" +
+            "Convert JWK and PEM Keys" +
             "</div></td></tr>" +
             "</table></div>" +
             "<div class='sitefooter'>Privacy/security notice: No user provided data is " +

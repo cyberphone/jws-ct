@@ -54,6 +54,8 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
     
     static String samplePublicKey;
     
+    static String sampleKeyConversionKey;
+
     static String keyDeclarations;
     
     static boolean logging;
@@ -96,7 +98,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
                 decl.append("\n    ")
                     .append(algId)
                     .append(": '")
-                    .append(HTML.javaScript(getEmbeddedResourceString(fileOrNull + base).trim()))
+                    .append(HTML.javaScript(getEmbeddedResourceString(fileOrNull + base)))
                     .append('\'');
                 last = algId;
             }
@@ -117,7 +119,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
     }
     
     String getEmbeddedResourceString(String name) throws IOException {
-        return new String(getEmbeddedResource(name), "utf-8");
+        return new String(getEmbeddedResource(name), "utf-8").trim();
     }
 
     @Override
@@ -168,6 +170,11 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
             sampleJsonForHashing = getEmbeddedResourceString("sample-data-to-hash.json");
 
             /////////////////////////////////////////////////////////////////////////////////////////////
+            // Sample key for converting
+            /////////////////////////////////////////////////////////////////////////////////////////////
+            sampleKeyConversionKey = getEmbeddedResourceString("ed25519privatekey.pem");
+
+            /////////////////////////////////////////////////////////////////////////////////////////////
             // Sample signature for verification
             /////////////////////////////////////////////////////////////////////////////////////////////
             String sampleDataToSign = getEmbeddedResourceString("sample-data-to-sign.json");
@@ -185,7 +192,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
             sampleSignature = sampleDataToSign.substring(0, sampleDataToSign.lastIndexOf('}')) +
                               "," +
                               signature.substring(signature.indexOf("\n "));
-            samplePublicKey = getEmbeddedResourceString("p256publickey.pem").trim();
+            samplePublicKey = getEmbeddedResourceString("p256publickey.pem");
 
             /////////////////////////////////////////////////////////////////////////////////////////////
             // Logging?

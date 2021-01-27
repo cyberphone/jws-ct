@@ -55,7 +55,7 @@ public class HashServlet extends HttpServlet {
                 throw new IOException("Unexpected MIME type:" + request.getContentType());
             }
 
-            // Get the three input data items
+            // Get the input data items
             JSONObjectReader parsedJson = JSONParser.parse(
                     CreateServlet.getParameter(request, JSON_DATA));
             HashAlgorithms hashAlgorithm = HashAlgorithms.getAlgorithmFromId(
@@ -72,7 +72,7 @@ public class HashServlet extends HttpServlet {
             byte[] hashedJson = hashAlgorithm.digest(canonicalJson.getBytes("utf-8"));
             
             StringBuilder html = new StringBuilder(
-                    "<div class='header'> JSON Data Successfully Hashed</div>")
+                    "<div class='header'>JSON Data Successfully Hashed</div>")
                 .append(HTML.fancyBox("pretty", 
                                       prettyJson, 
                                       "\"Pretty-printed\" JSON data"))           

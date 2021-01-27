@@ -49,6 +49,11 @@
         <servlet-class>org.webpki.webapps.jws_ct.HashServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>KeyConvertServlet</servlet-name>
+        <servlet-class>org.webpki.webapps.jws_ct.KeyConvertServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>
         <url-pattern>/home</url-pattern>
@@ -82,6 +87,11 @@
     <servlet-mapping>
         <servlet-name>HashServlet</servlet-name>
         <url-pattern>/hash</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>KeyConvertServlet</servlet-name>
+        <url-pattern>/keyconv</url-pattern>
     </servlet-mapping>
 
     <security-constraint>
