@@ -62,9 +62,11 @@ public class KeyConvertServlet extends HttpServlet {
             // Get the input key
             KeyPair keyPair = null;
             PublicKey publicKey = null;
-            byte[] keyData = CreateServlet.getParameter(request, KEY_DATA).getBytes("utf-8");
-            if (keyData[0] == '{') {
+            String keyData = CreateServlet.getParameter(request, KEY_DATA);
+            String jwk = null;
+            if (keyData.startsWith("{")) {
                 JSONObjectReader parsedJson = JSONParser.parse(keyData);
+                jwk = parsedJson.toString();
                 if (parsedJson.hasProperty(JoseKeyWords.KID_JSON)) {
                     parsedJson.removeProperty(JoseKeyWords.KID_JSON);
                 }
@@ -74,24 +76,30 @@ public class KeyConvertServlet extends HttpServlet {
                     publicKey = parsedJson.getCorePublicKey(AlgorithmPreferences.JOSE);
                 }
             } else {
+                byte[] keyDataBin = keyData.getBytes("utf-8");
                 try {
-                    keyPair = PEMDecoder.getKeyPair(keyData);
+                    keyPair = PEMDecoder.getKeyPair(keyDataBin);
                 } catch (Exception e) {
-                    publicKey = PEMDecoder.getPublicKey(keyData);
+                    if (keyData.contains("PRIVATE KEY")) {
+                        throw e;
+                    }
+                    publicKey = PEMDecoder.getPublicKey(keyDataBin);
                 }
             }
             KeyStore2PEMConverter pemConverter = new KeyStore2PEMConverter();
             if (keyPair == null) {
                 pemConverter.writePublicKey(publicKey);
             } else {
-                pemConverter.writePrivateKey(keyPair.getPrivate());
+                pemConverter.writePrivateKey(keyPair.getPrivate(), keyPair.getPublic());
             }
             String pem = new String(pemConverter.getData(), "utf-8");
             KeyStore2JWKConverter jwkConverter = new KeyStore2JWKConverter();
-            String jwk = keyPair == null ?
+            if(jwk == null) {
+                jwk = keyPair == null ?
                         jwkConverter.writePublicKey(publicKey)
-                                          :
-                        jwkConverter.writePrivateKey(keyPair.getPublic(), keyPair.getPrivate());
+                                      :
+                        jwkConverter.writePrivateKey(keyPair.getPrivate(), keyPair.getPublic());
+            }
                 
             StringBuilder html = new StringBuilder(
                     "<div class='header'>Key Successfully Converted</div>")
@@ -115,13 +123,19 @@ public class KeyConvertServlet extends HttpServlet {
 
         HTML.standardPage(response, null, new StringBuilder(
                 "<form name='shoot' method='POST' action='keyconv'>" +
-                "<div class='header'>Convert JWK to PEM</div>")
+                "<div class='header'>Convert JWK &lt;-&gt; PEM</div>")
             .append(HTML.fancyText(true,
                                    KEY_DATA,
-                                   20, 
+                                   10, 
                                    JwsCtService.sampleKeyConversionKey,
-                     "Paste public or private key in JWK or PEM format"))
+                     "Paste public or private key in JWK or PEM format or try with the default"))
             .append(
+                "<div style='margin-top:1em'>Limitations:" +
+                  "<ul>" +
+                    "<li>JWK keys may only contain the core key data plus an <i>optional</i> \"kid\"</li>" +
+                    "<li>PEM keys <i>must not</i> have algorithm identifiers like \"RSA\"</li>" +
+                  "</ul>" +
+                "</div>" +
                 "<div style='display:flex;justify-content:center'>" +
                 "<div class='stdbtn' onclick=\"document.forms.shoot.submit()\">" +
                 "Convert Key" +

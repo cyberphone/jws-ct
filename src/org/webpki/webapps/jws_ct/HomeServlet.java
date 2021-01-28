@@ -63,8 +63,8 @@ public class HomeServlet extends HttpServlet {
             "</div></td></tr>" +
             "<tr><td><div class='multibtn' " +
             "onclick=\"document.location.href='keyconv'\" " +
-            "title='Convert JWK and PEM keys'>" +
-            "Convert JWK and PEM Keys" +
+            "title='Convert JWK &lt;-&gt; PEM keys'>" +
+            "Convert JWK &lt;-&gt; PEM Keys" +
             "</div></td></tr>" +
             "</table></div>" +
             "<div class='sitefooter'>Privacy/security notice: No user provided data is " +
