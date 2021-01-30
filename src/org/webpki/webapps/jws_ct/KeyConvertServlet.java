@@ -133,8 +133,8 @@ public class KeyConvertServlet extends HttpServlet {
                 "<div style='margin-top:1em'>Limitations:" +
                   "<ul>" +
                     "<li>JWK keys may only contain the core key data plus an <i>optional</i> \"kid\"</li>" +
+                    "<li>PEM keys <b>must not</b> have external algorithm identifiers like \"RSA\"</li>" +
                     "<li>PEM private keys <b>must not</b> be encrypted" +
-                    "<li>PEM private keys <b>must not</b> have external algorithm identifiers like \"RSA\"</li>" +
                     "<li>PEM private keys <b>must</b> be supplied as PKCS #8 with a <i>defined public key attribute</i>" +
                   "</ul>" +
                 "</div>" +
