@@ -67,9 +67,10 @@ public class HashServlet extends HttpServlet {
             
             // Create a canonicalized (RFC 8785) version of the JSON data
             String canonicalJson = parsedJson.serializeToString(JSONOutputFormats.CANONICALIZED);
+            byte[] canonicalJsonBinary = canonicalJson.getBytes("utf-8");
             
             // Hash the UTF-8
-            byte[] hashedJson = hashAlgorithm.digest(canonicalJson.getBytes("utf-8"));
+            byte[] hashedJson = hashAlgorithm.digest(canonicalJsonBinary);
             
             StringBuilder html = new StringBuilder(
                     "<div class='header'>JSON Data Successfully Hashed</div>")
@@ -79,7 +80,10 @@ public class HashServlet extends HttpServlet {
                  .append(HTML.fancyBox("canonical", 
                                        canonicalJson,
                                       "Canonical (RFC 8785) version of the JSON data"))
-                 .append(HTML.fancyBox("algorithm", 
+                .append(HTML.fancyBox("canonicalhex", 
+                                  ArrayUtil.toHexString(canonicalJsonBinary, 0, -1, false, ' '),
+                                      "Canonical data in hexadecimal"))
+                .append(HTML.fancyBox("algorithm", 
                                        hashAlgorithm.getJoseAlgorithmId(),
                                        "Hash algorithm in JOSE-like notation"))
                  .append(HTML.fancyBox("hex",
