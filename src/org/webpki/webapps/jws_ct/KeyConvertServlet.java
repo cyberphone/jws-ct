@@ -63,10 +63,10 @@ public class KeyConvertServlet extends HttpServlet {
             KeyPair keyPair = null;
             PublicKey publicKey = null;
             String keyData = CreateServlet.getParameter(request, KEY_DATA);
-            String jwk = null;
+            boolean jwkFound = false;
             if (keyData.startsWith("{")) {
+                jwkFound = true;
                 JSONObjectReader parsedJson = JSONParser.parse(keyData);
-                jwk = parsedJson.toString();
                 if (parsedJson.hasProperty(JoseKeyWords.KID_JSON)) {
                     parsedJson.removeProperty(JoseKeyWords.KID_JSON);
                 }
@@ -94,22 +94,24 @@ public class KeyConvertServlet extends HttpServlet {
             }
             String pem = new String(pemConverter.getData(), "utf-8");
             KeyStore2JWKConverter jwkConverter = new KeyStore2JWKConverter();
-            if(jwk == null) {
-                jwk = keyPair == null ?
+            String jwk = keyPair == null ?
                         jwkConverter.writePublicKey(publicKey)
-                                      :
+                                         :
                         jwkConverter.writePrivateKey(keyPair.getPrivate(), keyPair.getPublic());
+            if (jwkFound) {
+                jwk = keyData;
+            } else {
+                pem = keyData;
             }
-                
             StringBuilder html = new StringBuilder(
                     "<div class='header'>Key Successfully Converted</div>")
                 .append(HTML.fancyBox("jwk", 
                                       JSONParser.parse(jwk).serializeToString(
                                               JSONOutputFormats.PRETTY_HTML), 
                                       "\"Pretty-printed\" JWK"))           
-                 .append(HTML.fancyBox("pem", 
-                                       pem.replace("\n", "<br>"),
-                                      "Key in PEM format"));
+                 .append(HTML.fancyCode("pem", 
+                                        pem,
+                                        "Key in PEM format"));
 
             // Finally, print it out
             HTML.standardPage(response, null, html.append("<div style='padding:10pt'></div>"));

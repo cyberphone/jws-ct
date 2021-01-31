@@ -35,7 +35,7 @@ public class HTML {
         "<title>JWS/CT Signature Lab</title>" + 
         "<link rel='stylesheet' type='text/css' href='style.css'>";
 
-    static String encode(String val) {
+    static String encode(String val, boolean newLineExpansion) {
         if (val != null) {
             StringBuilder buf = new StringBuilder(val.length() + 8);
             char c;
@@ -43,6 +43,9 @@ public class HTML {
             for (int i = 0; i < val.length(); i++) {
                 c = val.charAt(i);
                 switch (c) {
+                case '\n':
+                    buf.append(newLineExpansion ? "<br>" : "\n");
+                    break;
                 case '<':
                     buf.append("&lt;");
                     break;
@@ -68,7 +71,7 @@ public class HTML {
             return new String("");
         }
     }
-
+    
     static String getHTML(String javascript, String box) {
         StringBuilder html = new StringBuilder(HTML_INIT);
         if (javascript != null) {
@@ -123,6 +126,11 @@ public class HTML {
         return boxHeader(id, header, true) +
             "<div class='staticbox'>" + content + "</div></div>";
     }
+    
+    public static String fancyCode(String id, String content, String header) {
+        return boxHeader(id, header, true) +
+            "<div class='staticbox'>" + encode(content, true) + "</div></div>";
+    }
 
     public static String fancyText(boolean visible,
                                    String id, 
@@ -133,7 +141,7 @@ public class HTML {
             "<textarea" +
             " rows='" + rows + "' maxlength='100000'" +
             " class='textbox' name='" + id + "'>" + 
-            content +
+            encode(content, false) +
             "</textarea></div>";
     }
     
@@ -187,7 +195,7 @@ public class HTML {
                      new StringBuilder(
             "<div class='header' style='color:red'>Something went wrong...</div>" +
             "<div><pre>")
-        .append(encode(error.toString()))
+        .append(encode(error.toString(), false))
         .append("</pre></div>"));
     }
 }

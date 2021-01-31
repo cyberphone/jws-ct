@@ -77,9 +77,9 @@ public class HashServlet extends HttpServlet {
                 .append(HTML.fancyBox("pretty", 
                                       prettyJson, 
                                       "\"Pretty-printed\" JSON data"))           
-                 .append(HTML.fancyBox("canonical", 
+                .append(HTML.fancyCode("canonical", 
                                        canonicalJson,
-                                      "Canonical (RFC 8785) version of the JSON data"))
+                                       "Canonical (RFC 8785) version of the JSON data"))
                 .append(HTML.fancyBox("canonicalhex", 
                                   ArrayUtil.toHexString(canonicalJsonBinary, 0, -1, false, ' '),
                                       "Canonical data in hexadecimal"))
@@ -132,7 +132,7 @@ public class HashServlet extends HttpServlet {
             .append(HTML.fancyText(true,
                                    JSON_DATA,
                                    10, 
-                                   HTML.encode(JwsCtService.sampleJsonForHashing),
+                                   JwsCtService.sampleJsonForHashing,
                      "Paste JSON data in the text box or try with the default"))
             .append(algorithmSelector())
             .append(

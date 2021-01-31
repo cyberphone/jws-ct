@@ -54,6 +54,11 @@
         <servlet-class>org.webpki.webapps.jws_ct.KeyConvertServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>DumpASN1Servlet</servlet-name>
+        <servlet-class>org.webpki.webapps.jws_ct.DumpASN1Servlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>
         <url-pattern>/home</url-pattern>
@@ -92,6 +97,11 @@
     <servlet-mapping>
         <servlet-name>KeyConvertServlet</servlet-name>
         <url-pattern>/keyconv</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>DumpASN1Servlet</servlet-name>
+        <url-pattern>/dumpasn1</url-pattern>
     </servlet-mapping>
 
     <security-constraint>

@@ -45,8 +45,7 @@ public class JavaScriptSignatureServlet extends HttpServlet {
             String htmlSafe = HTML.encode(
                 JSONParser.parse(CreateServlet.getParameter(request, 
                                                             ValidateServlet.JWS_OBJECT))
-                    .serializeToString(JSONOutputFormats.PRETTY_JS_NATIVE))
-                        .replace("\n", "<br>")
+                    .serializeToString(JSONOutputFormats.PRETTY_JS_NATIVE), true)
                         .replace("  ", "&nbsp;&nbsp;&nbsp;&nbsp;");
             HTML.standardPage(response,
                               null, 
