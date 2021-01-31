@@ -85,17 +85,16 @@ public class DumpASN1Servlet extends HttpServlet {
             byte[] asn1 = new Base64().getBinaryFromBase64String(
                     pem.substring(l + 17, pem.length() - 14 - l));
             StringBuilder html = new StringBuilder(
-                    "<div class='header'>PEM Successfully Read</div>")
-                 .append(HTML.fancyCode("pem", 
+                    "<div class='header'>PEM Successfully Decoded</div>")
+                .append(HTML.fancyCode("pem", 
                                         pem,
                                         "PEM object"))
-                 .append(HTML.fancyBox("asn.1", 
-                                        "<code>" + 
-                                          HTML.encode(
-                                                  DerDecoder.decode(asn1).toString(true, true), 
-                                                  true).replace(" ", "&nbsp;") +
+                .append(HTML.fancyBox("asn.1", 
+                                      "<code>" + 
+                                        HTML.encode(DerDecoder.decode(asn1).toString(true, true), 
+                                                    true).replace(" ", "&nbsp;") +
                                         "</code>", 
-                                        "ASN.1"));
+                                      "ASN.1 dump"));
             // Finally, print it out
             HTML.standardPage(response, null, html.append("<div style='padding:10pt'></div>"));
         } catch (Exception e) {
