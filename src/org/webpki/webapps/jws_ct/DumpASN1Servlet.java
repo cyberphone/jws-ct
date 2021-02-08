@@ -18,9 +18,6 @@ package org.webpki.webapps.jws_ct;
 
 import java.io.IOException;
 
-import java.security.KeyPair;
-import java.security.PublicKey;
-
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -30,18 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.asn1.DerDecoder;
-import org.webpki.crypto.AlgorithmPreferences;
 
-import org.webpki.jose.JoseKeyWords;
-
-import org.webpki.json.JSONObjectReader;
-import org.webpki.json.JSONOutputFormats;
-import org.webpki.json.JSONParser;
-
-import org.webpki.tools.KeyStore2JWKConverter;
-import org.webpki.tools.KeyStore2PEMConverter;
 import org.webpki.util.Base64;
-import org.webpki.util.PEMDecoder;
 
 public class DumpASN1Servlet extends HttpServlet {
 
