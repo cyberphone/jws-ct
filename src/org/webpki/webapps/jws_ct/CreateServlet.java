@@ -35,9 +35,9 @@ import org.webpki.crypto.AsymSignatureAlgorithms;
 import org.webpki.crypto.HmacAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
-import org.webpki.jose.jws.JwsAsymKeySigner;
-import org.webpki.jose.jws.JwsHmacSigner;
-import org.webpki.jose.jws.JwsSigner;
+import org.webpki.jose.jws.JWSAsymKeySigner;
+import org.webpki.jose.jws.JWSHmacSigner;
+import org.webpki.jose.jws.JWSSigner;
 
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONObjectWriter;
@@ -357,13 +357,13 @@ public class CreateServlet extends HttpServlet {
                                                                AlgorithmPreferences.JOSE);
 
             // Get the signature key
-            JwsSigner jwsSigner;
+            JWSSigner JWSSigner;
             String validationKey;
             
             // Symmetric or asymmetric?
             if (signatureAlgorithm.isSymmetric()) {
                 validationKey = getParameter(request, PRM_SECRET_KEY);
-                jwsSigner = new JwsHmacSigner(decodeSymmetricKey(validationKey),
+                JWSSigner = new JWSHmacSigner(decodeSymmetricKey(validationKey),
                                              (HmacAlgorithms)signatureAlgorithm);
             } else {
                 // To simplify UI we require PKCS #8 with the public key embedded
@@ -384,21 +384,21 @@ public class CreateServlet extends HttpServlet {
                             "\n-----END PUBLIC KEY-----";
                 }
                 privateKeyBlob = null;  // Nullify it after use
-                jwsSigner = new JwsAsymKeySigner(keyPair.getPrivate(),
+                JWSSigner = new JWSAsymKeySigner(keyPair.getPrivate(),
                                                  (AsymSignatureAlgorithms)signatureAlgorithm);
 
                 // Add other JWS header data that the demo program fixes 
                 if (certOption) {
-                    ((JwsAsymKeySigner)jwsSigner).setCertificatePath(
+                    ((JWSAsymKeySigner)JWSSigner).setCertificatePath(
                             PEMDecoder.getCertificatePath(getBinaryParameter(request,
                                                                              PRM_CERT_PATH)));
                 } else if (keyInlining) {
-                    ((JwsAsymKeySigner)jwsSigner).setPublicKey(keyPair.getPublic());
+                    ((JWSAsymKeySigner)JWSSigner).setPublicKey(keyPair.getPublic());
                 }
             }
             
             // Add any optional (by the user specified) arguments
-            jwsSigner.addHeaderItems(additionalHeaderData);
+            JWSSigner.addHeaderItems(additionalHeaderData);
 
             // Create the detached JWS data to be signed. Of course using RFC 8785 :)
             byte[] jwsPayload = reader.serializeToBytes(JSONOutputFormats.CANONICALIZED);
@@ -407,7 +407,7 @@ public class CreateServlet extends HttpServlet {
 
             // Note: we didn't use the JWS/CT API method because it hides
             // the data needed for illustrating the function.
-            String jwsString = jwsSigner.sign(jwsPayload, true);
+            String jwsString = JWSSigner.sign(jwsPayload, true);
 
             // Create the completed object
             String signedJsonObject = new JSONObjectWriter(reader)

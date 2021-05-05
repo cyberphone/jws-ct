@@ -35,10 +35,10 @@ import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
 import org.webpki.json.JSONParser;
 
-import org.webpki.jose.jws.JwsHmacValidator;
-import org.webpki.jose.jws.JwsValidator;
-import org.webpki.jose.jws.JwsAsymSignatureValidator;
-import org.webpki.jose.jws.JwsDecoder;
+import org.webpki.jose.jws.JWSHmacValidator;
+import org.webpki.jose.jws.JWSValidator;
+import org.webpki.jose.jws.JWSAsymSignatureValidator;
+import org.webpki.jose.jws.JWSDecoder;
 
 import org.webpki.util.Base64URL;
 import org.webpki.util.PEMDecoder;
@@ -76,12 +76,12 @@ public class ValidateServlet extends HttpServlet {
             // Now begin the real work...
             
             // Decode
-            JwsDecoder jwsDecoder = new JwsDecoder(parsedObject, signatureLabel);
+            JWSDecoder JWSDecoder = new JWSDecoder(parsedObject, signatureLabel);
             
             // For demo purposes only
             String jwsString = parsedObject.getString(signatureLabel);
 
-            X509Certificate[] certificatePath = jwsDecoder.getOptionalCertificatePath();
+            X509Certificate[] certificatePath = JWSDecoder.getOptionalCertificatePath();
             StringBuilder certificateData = null;
             if (certificatePath != null) {
                 for (X509Certificate certificate : certificatePath) {
@@ -96,27 +96,27 @@ public class ValidateServlet extends HttpServlet {
             }
             
             // Recreate the validation key and validate the signature
-            JwsValidator jwsValidator;
+            JWSValidator JWSValidator;
             boolean jwkValidationKey = validationKey.startsWith("{");
-            if (jwsDecoder.getSignatureAlgorithm().isSymmetric()) {
-                jwsValidator = new JwsHmacValidator(CreateServlet.decodeSymmetricKey(validationKey));
+            if (JWSDecoder.getSignatureAlgorithm().isSymmetric()) {
+                JWSValidator = new JWSHmacValidator(CreateServlet.decodeSymmetricKey(validationKey));
             } else {
-                jwsValidator = new JwsAsymSignatureValidator(jwkValidationKey ? 
+                JWSValidator = new JWSAsymSignatureValidator(jwkValidationKey ? 
                         JSONParser.parse(validationKey).getCorePublicKey(AlgorithmPreferences.JOSE)
                                                                               :
                         PEMDecoder.getPublicKey(validationKey.getBytes("utf-8")));
             }
-            jwsValidator.validate(jwsDecoder);
+            JWSValidator.validate(JWSDecoder);
             StringBuilder html = new StringBuilder(
                     "<div class='header'>Signature Successfully Validated</div>")
                 .append(HTML.fancyBox("signed", 
                                       prettySignature, 
                                       "\"Pretty-printed\" JWS/CT object"))           
                 .append(HTML.fancyCode("header", 
-                                       jwsDecoder.getJwsHeaderAsString(),
+                                       JWSDecoder.getJWSHeaderAsString(),
                                       "Decoded JWS header"))
                 .append(HTML.fancyCode("canonical", 
-                                       new String(jwsDecoder.getPayload(), "utf-8"),
+                                       new String(JWSDecoder.getPayload(), "utf-8"),
                                       "Canonical (RFC 8785) version of the signed JSON data " +
                                         "(\"JWS Payload\")"))
                 .append(HTML.fancyBox("vkey",
@@ -126,7 +126,7 @@ public class ValidateServlet extends HttpServlet {
                                                        :
                                           HTML.encode(validationKey, true),
                           "Signature validation " +
-                              (jwsDecoder.getSignatureAlgorithm().isSymmetric() ?
+                              (JWSDecoder.getSignatureAlgorithm().isSymmetric() ?
                              "secret key " +
                              (validationKey.startsWith("@") ? "string value" : "in hexadecimal")
                                                                                 :
@@ -141,7 +141,7 @@ public class ValidateServlet extends HttpServlet {
             html.append(HTML.fancyBox("original", 
                                       new StringBuilder(jwsString)
                                         .insert(jwsString.indexOf('.') + 1, 
-                                                Base64URL.encode(jwsDecoder.getPayload())).toString(),
+                                                Base64URL.encode(JWSDecoder.getPayload())).toString(),
           "Finally (as a reference only...), the same object expressed as a standard JWS"));
 
             // Finally, print it out

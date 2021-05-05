@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.webpki.crypto.AlgorithmPreferences;
 import org.webpki.crypto.AsymSignatureAlgorithms;
 
-import org.webpki.jose.JoseKeyWords;
+import org.webpki.jose.JOSEKeyWords;
 
 import org.webpki.json.JSONCryptoHelper;
 
@@ -240,7 +240,7 @@ public class WebCryptoServlet extends HttpServlet {
                 "    }\n" + 
                 "    var jwsHeader = {};\n" + 
                 "    jwsHeader." + 
-                JoseKeyWords.ALG_JSON + 
+                JOSEKeyWords.ALG_JSON + 
                 " = '" + 
                 AsymSignatureAlgorithms.RSA_SHA256.getAlgorithmId(AlgorithmPreferences.JOSE) + 
                 "';\n" + 

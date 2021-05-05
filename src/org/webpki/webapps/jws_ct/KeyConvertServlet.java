@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.webpki.crypto.AlgorithmPreferences;
 
-import org.webpki.jose.JoseKeyWords;
+import org.webpki.jose.JOSEKeyWords;
 
 import org.webpki.json.JSONObjectReader;
 import org.webpki.json.JSONOutputFormats;
@@ -67,8 +67,8 @@ public class KeyConvertServlet extends HttpServlet {
             if (keyData.startsWith("{")) {
                 jwkFound = true;
                 JSONObjectReader parsedJson = JSONParser.parse(keyData);
-                if (parsedJson.hasProperty(JoseKeyWords.KID_JSON)) {
-                    parsedJson.removeProperty(JoseKeyWords.KID_JSON);
+                if (parsedJson.hasProperty(JOSEKeyWords.KID_JSON)) {
+                    parsedJson.removeProperty(JOSEKeyWords.KID_JSON);
                 }
                 try {
                     keyPair = parsedJson.getKeyPair();

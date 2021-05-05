@@ -33,7 +33,7 @@ import org.webpki.crypto.CustomCryptoProvider;
 import org.webpki.crypto.HmacAlgorithms;
 import org.webpki.crypto.SignatureAlgorithms;
 
-import org.webpki.jose.jws.JwsAsymKeySigner;
+import org.webpki.jose.jws.JWSAsymKeySigner;
 
 import org.webpki.json.JSONObjectWriter;
 import org.webpki.json.JSONOutputFormats;
@@ -180,7 +180,7 @@ public class JwsCtService extends InitPropertyReader implements ServletContextLi
             String sampleDataToSign = getEmbeddedResourceString("sample-data-to-sign.json");
             PrivateKey samplePrivateKey = 
                     PEMDecoder.getPrivateKey(getEmbeddedResource("p256privatekey.pem"));
-            String jwsString = new JwsAsymKeySigner(samplePrivateKey,
+            String jwsString = new JWSAsymKeySigner(samplePrivateKey,
                                                     AsymSignatureAlgorithms.ECDSA_SHA256)
                     .sign(JSONParser.parse(sampleDataToSign)
                             .serializeToBytes(JSONOutputFormats.CANONICALIZED),
