@@ -7,6 +7,8 @@
   <property name="temp.dir" value=".tmp"/>
   <property name="dist.dir" value="dist"/>
   <property name="class_war_path" value="WEB-INF/classes/org/webpki/webapps/jws_ct"/>
+    
+  <property name="webroot" value="webapps"/>
 
   <property name="logging" value="false"/>
   
@@ -46,7 +48,7 @@
   <target name="tomcat">
     <fail message="CATALINA_HOME must be set to environment!" unless="catalina.home"/>
     <antcall target="build"/>
-    <copy file="${dist.dir}/${application}" todir="${catalina.home}/webapps" overwrite="true" preservelastmodified="true"/>
+    <copy file="${dist.dir}/${application}" todir="${catalina.home}/${webroot}" overwrite="true" preservelastmodified="true"/>
   </target>
 
   <target name="build">
