@@ -46,7 +46,7 @@ import org.webpki.json.JSONParser;
 
 import org.webpki.util.Base64;
 import org.webpki.util.Base64URL;
-import org.webpki.util.DebugFormatter;
+import org.webpki.util.HexaDecimal;
 import org.webpki.util.PEMDecoder;
 
 public class CreateServlet extends HttpServlet {
@@ -328,7 +328,7 @@ public class CreateServlet extends HttpServlet {
         return keyString.startsWith("@") ? 
                    keyString.substring(1).getBytes("utf-8") 
                                          : 
-                  DebugFormatter.getByteArrayFromHex(keyString);
+                  HexaDecimal.decode(keyString);
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
