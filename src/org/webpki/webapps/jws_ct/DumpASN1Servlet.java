@@ -69,8 +69,7 @@ public class DumpASN1Servlet extends HttpServlet {
             if (i != pem.length() - l - 14) {
                 badPem();
             }
-            byte[] asn1 = new Base64().getBinaryFromBase64String(
-                    pem.substring(l + 17, pem.length() - 14 - l));
+            byte[] asn1 = Base64.decode(pem.substring(l + 17, pem.length() - 14 - l));
             StringBuilder html = new StringBuilder(
                     "<div class='header'>PEM Successfully Decoded</div>")
                 .append(HTML.fancyCode("pem", 

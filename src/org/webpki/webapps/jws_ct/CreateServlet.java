@@ -379,8 +379,7 @@ public class CreateServlet extends HttpServlet {
                  } else {
                     keyPair = PEMDecoder.getKeyPair(privateKeyBlob);
                     validationKey = "-----BEGIN PUBLIC KEY-----\n" +
-                            new Base64().getBase64StringFromBinary(
-                                    keyPair.getPublic().getEncoded()) +
+                            Base64.mimeEncode(keyPair.getPublic().getEncoded()) +
                             "\n-----END PUBLIC KEY-----";
                 }
                 privateKeyBlob = null;  // Nullify it after use
