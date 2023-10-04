@@ -50,7 +50,7 @@ browsers expressed in JavaScript or be asynchronously exchanged over WebSockets
 
 ### On Line Demo
 If you want to test the signature scheme without any installation or downloading, a
-demo is currently available at: https://mobilepki.org/jws-ct/home
+demo is currently available at: https://test.webpki.org/jws-ct/home
 
 ### Detailed Signing Operation
 1. Create or parse the JSON object to be signed
